@@ -1,0 +1,9 @@
+INSTALLAZIONE PROGRAMMA NOLEGGIO CON SETUP
+
+-	installare FIERBIRD 2.5.0 per il dblocale NOLOLOCAL.FDB
+-	installare il carattere IDAutomation
+-	dare diritti di accesso alla cartella per Domain User
+-	settare il file Nolosoft.ini e far puntare i database nelle posizioni giuste
+-	impostare le stampanti per etichette e stampanti per foglio ricevuta
+-	settare la com per opn
+

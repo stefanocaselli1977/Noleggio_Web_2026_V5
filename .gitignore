@@ -1,0 +1,61 @@
+# Delphi
+*.dcu
+*.exe
+*.dll
+*.bpl
+*.dcp
+*.identcache
+*.local
+__history/
+
+# Build
+Win32/
+Win64/
+Debug/
+Release/
+
+# Firebird
+*.fdb
+*.fbk
+*.gdb
+
+# Backup
+Backup/
+*.bak
+*.zip
+*.rar
+
+# Temporary
+*.tmp
+*.log
+
+# IDE
+*.~*
+
+# Firebird
+*.fdb
+*.fbk
+*.gdb
+
+# InstallShield
+DiskImages/
+InstallShield/
+
+# DLL grandi
+*.dll
+
+# EXE
+*.exe
+
+# ZIP e backup
+*.zip
+*.rar
+*.7z
+
+# Delphi
+*.dcu
+Win32/
+Win64/
+Debug/
+Release/
+__history/

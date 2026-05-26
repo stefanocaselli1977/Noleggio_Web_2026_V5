@@ -1,0 +1,175 @@
+﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		<PropertyGroup>
+			<ProjectGuid>{D5A441FD-B654-4FAA-9F73-2C8FA53FC7EE}</ProjectGuid>
+			<MainSource>NoloSoft.dpr</MainSource>
+			<Config Condition="'$(Config)'==''">Debug</Config>
+			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
+			<ProjectVersion>12.0</ProjectVersion>
+		</PropertyGroup>
+		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
+			<Base>true</Base>
+		</PropertyGroup>
+		<PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_1)'!=''">
+			<Cfg_1>true</Cfg_1>
+			<CfgParent>Base</CfgParent>
+			<Base>true</Base>
+		</PropertyGroup>
+		<PropertyGroup Condition="'$(Config)'=='Debug' or '$(Cfg_2)'!=''">
+			<Cfg_2>true</Cfg_2>
+			<CfgParent>Base</CfgParent>
+			<Base>true</Base>
+		</PropertyGroup>
+		<PropertyGroup Condition="'$(Base)'!=''">
+			<DCC_UsePackage>vclx;vcl;vclimg;dbrtl;Rave77VCL;bdertl;rtl;vclactnband;xmlrtl;vcldb;vcldbx;vcltouch;dsnap;dsnapcon;TeeUI;TeeDB;Tee;vclib;ibxpress;adortl;IndyCore;IndySystem;IndyProtocols;inet;intrawebdb_100_140;Intraweb_100_140;VclSmp;vclie;websnap;webdsnap;inetdb;inetdbbde;inetdbxpress;soaprtl;vclribbon;dbexpress;DbxCommonDriver;DataSnapIndy10ServerTransport;DataSnapProviderClient;DbxClientDriver;DataSnapServer;DBXInterBaseDriver;DBXMySQLDriver;dbxcds;DBXFirebirdDriver;DBXSybaseASEDriver;DBXSybaseASADriver;DBXOracleDriver;DBXMSSQLDriver;DBXInformixDriver;DBXDb2Driver;gtDocEngD14;gtRtlD14;gtQRExpD14;QR5RunD2010;dclOffice2k;TVidGrab</DCC_UsePackage>
+			<DCC_DependencyCheckOutputName>NoloSoft.exe</DCC_DependencyCheckOutputName>
+			<DCC_ImageBase>00400000</DCC_ImageBase>
+			<BRCC_IncludePath>E:\tscap32\tscap32_delphi7_release;$(BRCC_IncludePath)</BRCC_IncludePath>
+			<DCC_Platform>x86</DCC_Platform>
+		</PropertyGroup>
+		<PropertyGroup Condition="'$(Cfg_1)'!=''">
+			<DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
+			<DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
+			<DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
+			<DCC_DebugInformation>false</DCC_DebugInformation>
+		</PropertyGroup>
+		<PropertyGroup Condition="'$(Cfg_2)'!=''">
+			<DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
+		</PropertyGroup>
+		<ItemGroup>
+			<DelphiCompile Include="NoloSoft.dpr">
+				<MainSource>MainSource</MainSource>
+			</DelphiCompile>
+			<DCCReference Include="SoftHire.pas">
+				<Form>DM</Form>
+				<DesignClass>TDataModule</DesignClass>
+			</DCCReference>
+			<DCCReference Include="LogInDatabase.pas">
+				<Form>PasswordDlg</Form>
+			</DCCReference>
+			<DCCReference Include="nolo.pas">
+				<Form>Menu</Form>
+			</DCCReference>
+			<DCCReference Include="ViewCam.pas">
+				<Form>ViewCamSnap</Form>
+			</DCCReference>
+			<DCCReference Include="Ean39CodeGen.pas"/>
+			<DCCReference Include="GesTab.pas">
+				<Form>GestTab</Form>
+			</DCCReference>
+			<DCCReference Include="Pickdate.pas">
+				<Form>BrDateForm</Form>
+			</DCCReference>
+			<DCCReference Include="Account.pas">
+				<Form>ACCCONV</Form>
+			</DCCReference>
+			<DCCReference Include="DettArticolo.pas">
+				<Form>DettArt</Form>
+			</DCCReference>
+			<DCCReference Include="Qrep3.pas">
+				<Form>ReportOp</Form>
+			</DCCReference>
+			<DCCReference Include="RepCli.pas">
+				<Form>RepTesCli</Form>
+			</DCCReference>
+			<DCCReference Include="RepArti.pas">
+				<Form>RepArt</Form>
+			</DCCReference>
+			<DCCReference Include="SchCli.pas">
+				<Form>ScheCli</Form>
+			</DCCReference>
+			<DCCReference Include="RepSche.pas">
+				<Form>RepSchedule</Form>
+			</DCCReference>
+			<DCCReference Include="RepEtic.pas">
+				<Form>ETICHETTE</Form>
+			</DCCReference>
+			<DCCReference Include="RepList.pas">
+				<Form>REPLISTINO</Form>
+			</DCCReference>
+			<DCCReference Include="RepOp.pas">
+				<Form>OPERATORI</Form>
+			</DCCReference>
+			<DCCReference Include="ZFact.pas">
+				<Form>CalcZFact</Form>
+			</DCCReference>
+			<DCCReference Include="RepZ.pas">
+				<Form>RepZFact</Form>
+				<DesignClass>TQuickRep</DesignClass>
+			</DCCReference>
+			<DCCReference Include="SellArt.pas">
+				<Form>SelledArt</Form>
+			</DCCReference>
+			<DCCReference Include="RepArtGen.pas">
+				<Form>RepArtGeneral</Form>
+			</DCCReference>
+			<DCCReference Include="RepCv.pas">
+				<Form>RepContoV</Form>
+			</DCCReference>
+			<DCCReference Include="SceCliNew.pas">
+				<Form>NewSchCli</Form>
+			</DCCReference>
+			<DCCReference Include="EAN128.pas"/>
+			<BuildConfiguration Include="Base">
+				<Key>Base</Key>
+			</BuildConfiguration>
+			<BuildConfiguration Include="Debug">
+				<Key>Cfg_2</Key>
+				<CfgParent>Base</CfgParent>
+			</BuildConfiguration>
+			<BuildConfiguration Include="Release">
+				<Key>Cfg_1</Key>
+				<CfgParent>Base</CfgParent>
+			</BuildConfiguration>
+		</ItemGroup>
+		<Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')"/>
+		<ProjectExtensions>
+			<Borland.Personality>Delphi.Personality.12</Borland.Personality>
+			<Borland.ProjectType>VCLApplication</Borland.ProjectType>
+			<BorlandProject>
+				<Delphi.Personality>
+					<Source>
+						<Source Name="MainSource">NoloSoft.dpr</Source>
+					</Source>
+					<Parameters>
+						<Parameters Name="UseLauncher">False</Parameters>
+						<Parameters Name="LoadAllSymbols">True</Parameters>
+						<Parameters Name="LoadUnspecifiedSymbols">False</Parameters>
+					</Parameters>
+					<VersionInfo>
+						<VersionInfo Name="IncludeVerInfo">False</VersionInfo>
+						<VersionInfo Name="AutoIncBuild">False</VersionInfo>
+						<VersionInfo Name="MajorVer">1</VersionInfo>
+						<VersionInfo Name="MinorVer">0</VersionInfo>
+						<VersionInfo Name="Release">0</VersionInfo>
+						<VersionInfo Name="Build">0</VersionInfo>
+						<VersionInfo Name="Debug">False</VersionInfo>
+						<VersionInfo Name="PreRelease">False</VersionInfo>
+						<VersionInfo Name="Special">False</VersionInfo>
+						<VersionInfo Name="Private">False</VersionInfo>
+						<VersionInfo Name="DLL">False</VersionInfo>
+						<VersionInfo Name="Locale">1040</VersionInfo>
+						<VersionInfo Name="CodePage">1252</VersionInfo>
+					</VersionInfo>
+					<VersionInfoKeys>
+						<VersionInfoKeys Name="CompanyName"/>
+						<VersionInfoKeys Name="FileDescription"/>
+						<VersionInfoKeys Name="FileVersion">1.0.0.0</VersionInfoKeys>
+						<VersionInfoKeys Name="InternalName"/>
+						<VersionInfoKeys Name="LegalCopyright"/>
+						<VersionInfoKeys Name="LegalTrademarks"/>
+						<VersionInfoKeys Name="OriginalFilename"/>
+						<VersionInfoKeys Name="ProductName"/>
+						<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
+						<VersionInfoKeys Name="Comments"/>
+					</VersionInfoKeys>
+					<Excluded_Packages>
+						<Excluded_Packages Name="$(BDS)\bin\bcboffice2k140.bpl">Embarcadero C++Builder Office 2000 Servers Package</Excluded_Packages>
+						<Excluded_Packages Name="$(BDS)\bin\bcbofficexp140.bpl">Embarcadero C++Builder Office XP Servers Package</Excluded_Packages>
+						<Excluded_Packages Name="$(BDS)\bin\dclofficexp140.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+					</Excluded_Packages>
+				</Delphi.Personality>
+				<ModelSupport>False</ModelSupport>
+			</BorlandProject>
+			<ProjectFileVersion>12</ProjectFileVersion>
+		</ProjectExtensions>
+	</Project>

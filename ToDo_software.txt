@@ -1,0 +1,3 @@
+appunti per Nolosoft NOLO_WEBADD_2021_V2
+- carico prodotti dal codice a barre del negozio
+- inserire le immagini dei prodotti caricati per avvio al web
