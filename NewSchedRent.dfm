@@ -1,6 +1,6 @@
 object New_Sched: TNew_Sched
-  Left = 55
-  Top = 122
+  Left = 154
+  Top = 190
   Width = 1460
   Height = 781
   Caption = 'SCHEDA NOLEGGIO'
@@ -730,7 +730,7 @@ object New_Sched: TNew_Sched
       Left = 400
       Top = 96
       Width = 65
-      Height = 40
+      Height = 39
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
       Font.Height = -24

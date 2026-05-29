@@ -1,6 +1,6 @@
 object Ripmodule: TRipmodule
-  Left = 460
-  Top = 351
+  Left = 321
+  Top = 132
   BorderStyle = bsDialog
   Caption = 'Modulo Riparazione'
   ClientHeight = 706

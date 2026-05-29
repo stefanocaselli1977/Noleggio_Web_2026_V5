@@ -160,6 +160,10 @@ type
     function  MaskToDate(const AMask: TMaskEdit; out ADate: TDateTime): Boolean;
     procedure AggiornaTotaleArticoli;
     procedure RebuildStringGrid;
+   // function  PeriodoContieneWeekend(DataInizio, DataFine: TDateTime): Boolean;
+   // function  GetPrezzoUnitario(const ATipo: string; ADayUse: Integer; AHasWeekend: Boolean): Double;
+   // procedure AggiornaTotaleArticoli;
+   // procedure AggiornaTotaleArticoli_price;
 
   public
     Scheda: TScheda;
@@ -223,19 +227,7 @@ begin
   SetLength(Articoli, 0);
 end;
 
-procedure TNew_Sched.AggiornaTotaleArticoli;
-var
-  i      : Integer;
-  Totale : Integer;
-begin
-  Totale := 0;
-  for i := 0 to High(Scheda.Articoli) do
 
-    Totale := Totale + Scheda.Articoli[i].QTA;
-
-  Edit14.Text := IntToStr(Totale);   // articoli noleggiati
-  Edit16.Text := IntToStr(Totale); //   srticoli aperti
-end;
 
 procedure TNew_Sched.RebuildStringGrid;
 var
@@ -1378,6 +1370,25 @@ begin
 
 
   end;
+
+
+
+
+procedure TNew_Sched.AggiornaTotaleArticoli;
+var
+  i      : Integer;
+  Totale : Integer;
+begin
+  Totale := 0;
+  for i := 0 to High(Scheda.Articoli) do
+
+    Totale := Totale + Scheda.Articoli[i].QTA;
+
+  Edit14.Text := IntToStr(Totale);   // articoli noleggiati
+  Edit16.Text := IntToStr(Totale); //   srticoli aperti
+end;
+
+
 
 initialization
 

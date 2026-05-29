@@ -101,7 +101,7 @@ function InserisciRiparazione(
   out   ARisposta     : TRispostaRiparazione
 ): Boolean;
 const
-  API_URL = 'http://localhost:81/RentCustomers/insert_riparazione.php';
+  API_URL = 'http://localhost:81/RentCustomers/insert_riparazione_new.php';
 var
   IdHTTP      : TIdHTTP;
   Stream      : TStringStream;
