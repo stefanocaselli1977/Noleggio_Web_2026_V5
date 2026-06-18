@@ -1047,7 +1047,7 @@ object New_Sched: TNew_Sched
       object MaskEdit7: TMaskEdit
         Left = 15
         Top = 27
-        Width = 77
+        Width = 90
         Height = 37
         EditMask = #8364' 9999,0;1;_'
         Font.Charset = ANSI_CHARSET

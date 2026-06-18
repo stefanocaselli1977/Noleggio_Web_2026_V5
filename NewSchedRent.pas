@@ -272,7 +272,7 @@ begin
 
   StringGrid1.Invalidate;
   StringGrid1.Update;
-  AggiornaTotaleArticoli;
+//  AggiornaTotaleArticoli;
 end;
 
 {procedure TScheda.AddOrUpdateArticolo(ACli_no, AArt_no, ASched_no: Double;
