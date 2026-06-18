@@ -9168,9 +9168,6 @@ result:=0;
 end;
 
 
-
-
-
 procedure TMenu.SpeedButton14Click(Sender: TObject);
 var dir:string;
 const seldirhelp=1000;

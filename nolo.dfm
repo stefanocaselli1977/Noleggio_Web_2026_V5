@@ -27,9 +27,9 @@ object Menu: TMenu
     Top = 0
     Width = 1000
     Height = 690
-    ActivePage = TabSheet3
+    ActivePage = TabSheet1
     Anchors = []
-    TabIndex = 2
+    TabIndex = 0
     TabOrder = 0
     OnChanging = PageControl1Changing
     object TabSheet1: TTabSheet
@@ -2352,7 +2352,7 @@ object Menu: TMenu
           Font.Height = -16
           Font.Name = 'MS Sans Serif'
           Font.Style = []
-          ItemHeight = 20
+          ItemHeight = 0
           ParentFont = False
           TabOrder = 1
           OnEnter = ComboBox1Enter
@@ -5354,7 +5354,7 @@ object Menu: TMenu
         Width = 111
         Height = 21
         Style = csDropDownList
-        ItemHeight = 13
+        ItemHeight = 0
         TabOrder = 9
         OnEnter = ComboBox17Enter
         OnSelect = ComboBox17Select
@@ -5457,7 +5457,7 @@ object Menu: TMenu
           Height = 21
           Style = csDropDownList
           Enabled = False
-          ItemHeight = 13
+          ItemHeight = 0
           TabOrder = 2
           OnEnter = ComboBox4Enter
         end
@@ -5468,7 +5468,7 @@ object Menu: TMenu
           Height = 21
           Style = csDropDownList
           Enabled = False
-          ItemHeight = 13
+          ItemHeight = 0
           TabOrder = 3
           OnEnter = ComboBox5Enter
         end
@@ -5883,7 +5883,7 @@ object Menu: TMenu
           Width = 89
           Height = 21
           Style = csDropDownList
-          ItemHeight = 13
+          ItemHeight = 0
           TabOrder = 1
           OnEnter = ComboBox2Enter
         end
@@ -5893,7 +5893,7 @@ object Menu: TMenu
           Width = 89
           Height = 21
           Style = csDropDownList
-          ItemHeight = 13
+          ItemHeight = 0
           TabOrder = 2
           OnEnter = ComboBox12Enter
         end
@@ -6045,7 +6045,7 @@ object Menu: TMenu
           Width = 165
           Height = 21
           Style = csDropDownList
-          ItemHeight = 13
+          ItemHeight = 0
           TabOrder = 1
           OnEnter = ComboBox16Enter
         end
@@ -7614,7 +7614,7 @@ object Menu: TMenu
           Font.Height = -16
           Font.Name = 'MS Sans Serif'
           Font.Style = []
-          ItemHeight = 20
+          ItemHeight = 0
           ParentFont = False
           TabOrder = 2
           OnEnter = ComboBox3Enter

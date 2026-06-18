@@ -36,6 +36,19 @@ type
     Messaggio  : string;
   end;
 
+  TRigaPrezzo = record
+    Tipo       : string;
+    PrezzoUnit : Double;
+    Qta        : Integer;
+    Subtotale  : Double;
+  end;
+
+  TRispostaPrezzo = record
+    Success    : Boolean;
+    Righe      : array of TRigaPrezzo;
+    Subtotale  : Double;
+    ErrorMsg   : string;
+  end;
 
 
   // -------------------------------------------------------
@@ -55,7 +68,7 @@ type
 
   TArticoloAPIArray = array of TArticoloAPI;
 
-  
+
 
   // -------------------------------------------------------
   // Record per gli elementi non disponibili
@@ -86,8 +99,15 @@ function GetProductInventario(const ACods: array of string; var AProducts: TProd
 function GetRentArticoli(const ACodici: array of string; out ARisposta: TRispostaRentAPI): Boolean;
 function GetJsonValue(const AJson, AKey: string): string;
 function InserisciRiparazione(ACli_no: Integer;  const ATipo  : string;  const ABrand : string;  const ADescr : string;  ASched_no    : Double;  const AOwner : string;  const APrefRipNo    : string;  const ADataStartRent: string;out   ARisposta     : TRispostaRiparazione): Boolean;
+function CallCalcolaPrezzo(  const ADataStart : string;  const ADataTake:string;  ADayUse: Integer; const AArticoli  : string;  out   ARisposta  : TRispostaPrezzo): Boolean;
+function ExtractJsonObject(const AJson, AKey: string): string;
+function GetLastJsonValue(const AJson, AKey: string): string;
+
+
+
 
 implementation
+
 
 function InserisciRiparazione(
   ACli_no      : Integer;
@@ -186,7 +206,6 @@ begin
     IdHTTP.Free;
   end;
 end;
-
 
 
 
@@ -474,7 +493,7 @@ begin
 end;
 
 // -------------------------------------------------------
-// Splitta un JSON array di stringhe ["a","b",...] 
+// Splitta un JSON array di stringhe ["a","b",...]
 // in singoli valori stringa
 // -------------------------------------------------------
 procedure SplitJsonStringArray(const AJson: string; AList: TStringList);
@@ -662,6 +681,244 @@ begin
   IdHTTP.Free;
 end;
 
+
+// -------------------------------------------------------
+// Chiamata API calcola_prezzo
+// Riutilizza GetJsonValue, ExtractJsonArray, SplitJsonObjects
+// -------------------------------------------------------
+function CallCalcolaPrezzo(
+  const ADataStart : string;
+  const ADataTake  : string;
+  ADayUse          : Integer;
+  const AArticoli  : string;
+  out   ARisposta  : TRispostaPrezzo
+): Boolean;
+const
+  API_URL = 'http://serverps3:8081/RentCustomers/calcola_prezzo.php';
+var
+  IdHTTP      : TIdHTTP;
+  Stream      : TStringStream;
+  ResponseStr : string;
+  DataJson    : string;   // <-- blocco "data" isolato
+  Body        : string;
+  SuccessStr  : string;
+  RigheJson   : string;
+  ObjList     : TStringList;
+  i           : Integer;
+  ValStr      : string;
+begin
+  Result := False;
+  ARisposta.Success   := False;
+  ARisposta.ErrorMsg  := '';
+  ARisposta.Subtotale := 0;
+  SetLength(ARisposta.Righe, 0);
+
+  Body :=
+    '{'                                           +
+    '"datastartrent":"' + ADataStart     + '",'   +
+    '"datatakeback":"'  + ADataTake      + '",'   +
+    '"dayuse":'         + IntToStr(ADayUse) + ',' +
+    '"articoli":'       + AArticoli           +
+    '}';
+
+  IdHTTP  := TIdHTTP.Create(nil);
+  Stream  := TStringStream.Create(Body);
+  ObjList := TStringList.Create;
+  try
+    try
+      IdHTTP.HandleRedirects     := True;
+      IdHTTP.ConnectTimeout      := 10000;
+      IdHTTP.ReadTimeout         := 30000;
+      IdHTTP.Request.ContentType := 'application/json';
+      IdHTTP.Request.Accept      := 'application/json';
+
+      ResponseStr := IdHTTP.Post(API_URL, Stream);
+
+    except
+      on E: EIdHTTPProtocolException do
+      begin
+        ARisposta.ErrorMsg := 'Errore HTTP ' +
+                              IntToStr(IdHTTP.ResponseCode) + ': ' + E.Message;
+        Exit;
+      end;
+      on E: Exception do
+      begin
+        ARisposta.ErrorMsg := 'Errore connessione: ' + E.Message;
+        Exit;
+      end;
+    end;
+
+    // --------------------------------------------------------
+    // Controllo success
+    // --------------------------------------------------------
+    SuccessStr := LowerCase(Trim(GetJsonValue(ResponseStr, 'success')));
+    if SuccessStr <> 'true' then
+    begin
+      ARisposta.ErrorMsg := GetJsonValue(ResponseStr, 'error');
+      Exit;
+    end;
+
+    // --------------------------------------------------------
+    // Estrae il blocco "data": { "righe":[...], "subtotale":38 }
+    // cosi' il parsing di subtotale e righe lavora
+    // sul blocco isolato senza ambiguita'
+    // --------------------------------------------------------
+    DataJson := ExtractJsonObject(ResponseStr, 'data');
+    if DataJson = '' then
+    begin
+      // Fallback: prova direttamente sulla risposta completa
+      DataJson := ResponseStr;
+    end;
+
+    // --------------------------------------------------------
+    // Subtotale globale — lo legge dal blocco data
+    // --------------------------------------------------------
+   ValStr := GetLastJsonValue(DataJson, 'subtotale');
+   ValStr := StringReplace(ValStr, '.', DecimalSeparator, [rfReplaceAll]);
+   try
+    ARisposta.Subtotale := StrToFloat(ValStr);
+   except
+    ARisposta.Subtotale := 0;
+   end;
+
+    // --------------------------------------------------------
+    // Parsing array "righe" — sul blocco data
+    // --------------------------------------------------------
+    RigheJson := ExtractJsonArray(DataJson, 'righe');
+    if RigheJson <> '' then
+    begin
+      SplitJsonObjects(RigheJson, ObjList);
+      SetLength(ARisposta.Righe, ObjList.Count);
+
+      for i := 0 to ObjList.Count - 1 do
+      begin
+        ARisposta.Righe[i].Tipo := GetJsonValue(ObjList[i], 'tipo');
+
+        ValStr := GetJsonValue(ObjList[i], 'prezzoUnit');
+        ValStr := StringReplace(ValStr, '.', DecimalSeparator, [rfReplaceAll]);
+        try
+          ARisposta.Righe[i].PrezzoUnit := StrToFloat(ValStr);
+        except
+          ARisposta.Righe[i].PrezzoUnit := 0;
+        end;
+
+        try
+          ARisposta.Righe[i].Qta := StrToInt(GetJsonValue(ObjList[i], 'qta'));
+        except
+          ARisposta.Righe[i].Qta := 0;
+        end;
+
+        ValStr := GetJsonValue(ObjList[i], 'subtotale');
+        ValStr := StringReplace(ValStr, '.', DecimalSeparator, [rfReplaceAll]);
+        try
+          ARisposta.Righe[i].Subtotale := StrToFloat(ValStr);
+        except
+          ARisposta.Righe[i].Subtotale := 0;
+        end;
+      end;
+    end;
+
+    ARisposta.Success := True;
+    Result            := True;
+
+  finally
+    ObjList.Free;
+    Stream.Free;
+    IdHTTP.Free;
+  end;
+end;
+
+// -------------------------------------------------------
+// Estrae il contenuto di un oggetto JSON { } per chiave
+// -------------------------------------------------------
+function ExtractJsonObject(const AJson, AKey: string): string;
+var
+  SearchKey  : string;
+  Pos1, Pos2 : Integer;
+  Depth      : Integer;
+  i          : Integer;
+  SubStr     : string;
+begin
+  Result    := '';
+  SearchKey := '"' + AKey + '"';
+  Pos1      := Pos(SearchKey, AJson);
+  if Pos1 = 0 then Exit;
+
+  SubStr := Copy(AJson, Pos1 + Length(SearchKey), Length(AJson));
+  Pos2   := Pos('{', SubStr);
+  if Pos2 = 0 then Exit;
+
+  Pos1 := Pos1 + Length(SearchKey) + Pos2 - 1;
+
+  Depth := 0;
+  for i := Pos1 to Length(AJson) do
+  begin
+    if AJson[i] = '{' then Inc(Depth)
+    else if AJson[i] = '}' then
+    begin
+      Dec(Depth);
+      if Depth = 0 then
+      begin
+        Result := Copy(AJson, Pos1, i - Pos1 + 1);
+        Exit;
+      end;
+    end;
+  end;
+end;
+
+// -------------------------------------------------------
+// Estrae l'ultimo valore numerico di una chiave nel JSON
+// utile quando la chiave appare più volte
+// (es. "subtotale" dentro le righe e poi quello globale)
+// -------------------------------------------------------
+function GetLastJsonValue(const AJson, AKey: string): string;
+var
+  SearchKey  : string;
+  Pos1, Pos2 : Integer;
+  SubStr     : string;
+  LastResult : string;
+begin
+  Result    := '';
+  LastResult := '';
+  SearchKey := '"' + AKey + '"';
+  Pos1      := 1;
+
+  // Scorre tutto il JSON trovando tutte le occorrenze
+  // e tiene l'ultima
+  repeat
+    Pos2 := Pos(SearchKey, Copy(AJson, Pos1, Length(AJson)));
+    if Pos2 = 0 then Break;
+
+    Pos1 := Pos1 + Pos2 - 1;
+
+    SubStr := Trim(Copy(AJson, Pos1 + Length(SearchKey), Length(AJson)));
+    if (Length(SubStr) > 0) and (SubStr[1] = ':') then
+    begin
+      SubStr := Trim(Copy(SubStr, 2, Length(SubStr)));
+      // Estrae il valore numerico o stringa
+      if (Length(SubStr) > 0) and (SubStr[1] = '"') then
+      begin
+        // Valore stringa
+        SubStr     := Copy(SubStr, 2, Length(SubStr));
+        Pos2       := Pos('"', SubStr);
+        if Pos2 > 0 then
+          LastResult := Copy(SubStr, 1, Pos2 - 1);
+      end
+      else
+      begin
+        // Valore numerico/booleano
+        Pos2 := 1;
+        while (Pos2 <= Length(SubStr)) and
+              not (SubStr[Pos2] in [',', '}', ']', ' ', #13, #10]) do
+          Inc(Pos2);
+        LastResult := Copy(SubStr, 1, Pos2 - 1);
+      end;
+    end;
+    Inc(Pos1, Length(SearchKey));
+  until Pos1 >= Length(AJson);
+
+  Result := LastResult;
+end;
 
 
 

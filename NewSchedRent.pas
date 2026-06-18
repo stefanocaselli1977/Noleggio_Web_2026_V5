@@ -151,6 +151,7 @@ type
     procedure BitBtn1Click(Sender: TObject);
     procedure BitBtn2Click(Sender: TObject);
     procedure BitBtn40Click(Sender: TObject);
+    procedure MaskEdit8Exit(Sender: TObject);
 
   
 
@@ -160,6 +161,7 @@ type
     function  MaskToDate(const AMask: TMaskEdit; out ADate: TDateTime): Boolean;
     procedure AggiornaTotaleArticoli;
     procedure RebuildStringGrid;
+    function  BuildArticoliJSON: string;
    // function  PeriodoContieneWeekend(DataInizio, DataFine: TDateTime): Boolean;
    // function  GetPrezzoUnitario(const ATipo: string; ADayUse: Integer; AHasWeekend: Boolean): Double;
    // procedure AggiornaTotaleArticoli;
@@ -355,10 +357,10 @@ begin
   Edit6.ReadOnly := True;
 
   // Importi
-  MaskEdit7.Text := #8364 + '    0';   // SUBTOTALE
+  MaskEdit7.Text := #8364 + '     0,0';
   MaskEdit7.ReadOnly := True;
-  MaskEdit8.Text := ' 0%';             // DISCOUNT
-  MaskEdit9.Text := #8364 + '    0';   // NETPRICE
+  MaskEdit8.Text := ' 0,0%';             // DISCOUNT
+  MaskEdit9.Text := #8364 + '     0,0';
   MaskEdit9.ReadOnly := True;
 
   // PAGATO
@@ -460,6 +462,7 @@ begin
   // Data accettata
   Scheda.DATASTARTRENT := D;
   AggiornaDayUse;
+  AggiornaTotaleArticoli;
 end;
 
 procedure TNew_Sched.MaskEdit1Exit(Sender: TObject);
@@ -515,6 +518,7 @@ begin
   // Data accettata — aggiorna scheda e controlli
   Scheda.DATATAKEBACK := D;
   AggiornaDayUse;
+  AggiornaTotaleArticoli;
 end;
 
 
@@ -623,6 +627,7 @@ begin
     Giorni           := Trunc(Int(Scheda.DATATAKEBACK) - Int(Scheda.DATASTARTRENT));
     Scheda.DAYUSE    := Giorni;
     SpinEdit1.Value  := Giorni;
+   // AggiornaTotaleArticoli; 
   end;
 end;
 
@@ -918,7 +923,7 @@ ShowMessage(Msg);
 
   //RefreshStringgrid1(Scheda);
   RebuildStringGrid;
-
+  AggiornaTotaleArticoli;
  // StringGrid1.Invalidate;
  // StringGrid1.Update;
  // Self.Repaint;
@@ -1373,7 +1378,7 @@ begin
 
 
 
-
+ {
 procedure TNew_Sched.AggiornaTotaleArticoli;
 var
   i      : Integer;
@@ -1386,9 +1391,137 @@ begin
 
   Edit14.Text := IntToStr(Totale);   // articoli noleggiati
   Edit16.Text := IntToStr(Totale); //   srticoli aperti
+end; }
+
+// -------------------------------------------------------
+// Costruisce il JSON array articoli raggruppati per TIPO
+// -------------------------------------------------------
+
+function TNew_Sched.BuildArticoliJSON: string;
+var
+  Tipi  : TStringList;
+  i, k  : Integer;
+  Found : Boolean;
+  Qtot  : Integer;
+begin
+  Tipi := TStringList.Create;
+  try
+    for i := 0 to High(Scheda.Articoli) do
+    begin
+      Found := False;
+      for k := 0 to Tipi.Count - 1 do
+        if Tipi[k] = Scheda.Articoli[i].TIPO then
+        begin
+          Tipi.Objects[k] :=
+            TObject(Integer(Tipi.Objects[k]) + Scheda.Articoli[i].QTA);
+          Found := True;
+          Break;
+        end;
+      if not Found then
+        Tipi.AddObject(Scheda.Articoli[i].TIPO,
+                       TObject(Scheda.Articoli[i].QTA));
+    end;
+
+    Result := '[';
+    for i := 0 to Tipi.Count - 1 do
+    begin
+      Qtot   := Integer(Tipi.Objects[i]);
+      Result := Result +
+        Format('{"tipo":"%s","qta":%d}', [Tipi[i], Qtot]);
+      if i < Tipi.Count - 1 then
+        Result := Result + ',';
+    end;
+    Result := Result + ']';
+  finally
+    Tipi.Free;
+  end;
 end;
 
 
+
+// -------------------------------------------------------
+// Ricalcola totali chiamando API.pas
+// -------------------------------------------------------
+procedure TNew_Sched.AggiornaTotaleArticoli;
+var
+  Risposta   : TRispostaPrezzo;
+  ScontoPerc : Double;
+  ScontoStr  : string;
+  Sconto     : Double;
+  Netto      : Double;
+   JsonDebug : string;
+begin
+  if Scheda.DAYUSE < 1 then Exit;
+
+  if Length(Scheda.Articoli) = 0 then
+  begin
+    Scheda.SUBTOTALE := 0;
+    Scheda.NETPRICE  := 0;
+    // Rispetta il formato della maschera: '€ 9999;1;_'
+    MaskEdit7.Text := #8364 + '     0,0';
+    MaskEdit9.Text := #8364 + '     0,0';
+
+    Exit;
+  end;
+
+   // DEBUG — rimuovi dopo il test
+  JsonDebug := BuildArticoliJSON;
+  ShowMessage('JSON inviato al server:' + #13#10 + JsonDebug);
+
+  if not CallCalcolaPrezzo(
+           FormatDateTime('dd/mm/yyyy', Scheda.DATASTARTRENT),
+           FormatDateTime('dd/mm/yyyy', Scheda.DATATAKEBACK),
+           Scheda.DAYUSE,
+           BuildArticoliJSON,
+           Risposta) then
+  begin
+    ShowMessage('Errore calcolo prezzi: ' + Risposta.ErrorMsg);
+    Exit;
+  end;
+
+  // Legge sconto da MaskEdit8 — formato 00,0%
+  ScontoPerc := 0;
+  ScontoStr  := StringReplace(MaskEdit8.Text, '%', '', [rfReplaceAll]);
+  ScontoStr  := StringReplace(ScontoStr,      '_', '', [rfReplaceAll]);
+  ScontoStr  := Trim(ScontoStr);
+  // Sostituisce la virgola con il separatore decimale del sistema
+  ScontoStr  := StringReplace(ScontoStr, ',', DecimalSeparator, [rfReplaceAll]);
+  TryStrToFloat(ScontoStr, ScontoPerc);
+
+  Sconto := Risposta.Subtotale * ScontoPerc / 100;
+  Netto  := Risposta.Subtotale - Sconto;
+
+  // Aggiorna scheda
+  Scheda.SUBTOTALE := Risposta.Subtotale;
+  Scheda.DISCOUNT  := ScontoPerc;
+  Scheda.NETPRICE  := Netto;
+{
+  // --------------------------------------------------------
+  // Popola MaskEdit7 — formato maschera: € 9999 (4 cifre, no decimali)
+  // Tronca a intero e formatta con padding a 4 cifre
+  // --------------------------------------------------------
+  MaskEdit7.Text := #8364 + Format('%4d', [Round(Risposta.Subtotale)]);
+
+  // --------------------------------------------------------
+  // Popola MaskEdit9 — stesso formato di MaskEdit7
+  // --------------------------------------------------------
+  MaskEdit9.Text := #8364 + Format('%4d', [Round(Netto)]);
+}
+  // Subtotale — formato € 99999,0
+MaskEdit7.Text := #8364 + Format('%4d', [Round(Risposta.Subtotale)]);
+
+// Totale netto — stesso formato
+MaskEdit9.Text := #8364 + Format('%4d', [Round(Netto)]);
+
+end;
+
+
+
+
+procedure TNew_Sched.MaskEdit8Exit(Sender: TObject);
+begin
+AggiornaTotaleArticoli;
+end;
 
 initialization
 
