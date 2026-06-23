@@ -1,6 +1,6 @@
 object New_Sched: TNew_Sched
-  Left = 79
-  Top = 81
+  Left = 181
+  Top = 117
   Width = 1460
   Height = 781
   Caption = 'SCHEDA NOLEGGIO'
@@ -1061,20 +1061,21 @@ object New_Sched: TNew_Sched
         Text = #8364'     , '
       end
       object MaskEdit8: TMaskEdit
-        Left = 119
+        Left = 112
         Top = 27
-        Width = 66
+        Width = 77
         Height = 37
-        EditMask = '00,0%;1;_'
+        EditMask = '999,0%;1;_'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
         Font.Height = -24
         Font.Name = 'Calibri'
         Font.Style = []
-        MaxLength = 5
+        MaxLength = 6
         ParentFont = False
         TabOrder = 1
-        Text = '  , %'
+        Text = '   , %'
+        OnEnter = MaskEdit8Enter
         OnExit = MaskEdit8Exit
       end
       object MaskEdit9: TMaskEdit
@@ -1092,9 +1093,11 @@ object New_Sched: TNew_Sched
         ParentFont = False
         TabOrder = 2
         Text = #8364'     , '
+        OnEnter = MaskEdit9Enter
+        OnExit = MaskEdit9Exit
       end
       object CheckBox1: TCheckBox
-        Left = 199
+        Left = 167
         Top = 79
         Width = 137
         Height = 17

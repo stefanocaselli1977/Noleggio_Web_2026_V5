@@ -1,6 +1,6 @@
 object Menu: TMenu
-  Left = 419
-  Top = 146
+  Left = 293
+  Top = 103
   AutoSize = True
   BorderStyle = bsSingle
   Caption = 'Menu'
@@ -27,9 +27,9 @@ object Menu: TMenu
     Top = 0
     Width = 1000
     Height = 690
-    ActivePage = TabSheet1
+    ActivePage = TabSheet3
     Anchors = []
-    TabIndex = 0
+    TabIndex = 2
     TabOrder = 0
     OnChanging = PageControl1Changing
     object TabSheet1: TTabSheet
@@ -1895,31 +1895,26 @@ object Menu: TMenu
             item
               Expanded = False
               FieldName = 'NOME'
-              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'INDIRIZZO'
-              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'CITTA'
-              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'PAESE'
-              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'N_DOC'
-              Width = 64
               Visible = True
             end>
         end
@@ -2352,7 +2347,7 @@ object Menu: TMenu
           Font.Height = -16
           Font.Name = 'MS Sans Serif'
           Font.Style = []
-          ItemHeight = 0
+          ItemHeight = 20
           ParentFont = False
           TabOrder = 1
           OnEnter = ComboBox1Enter
@@ -4747,7 +4742,6 @@ object Menu: TMenu
           item
             Expanded = False
             FieldName = 'DESCRIZIONE'
-            Width = 64
             Visible = True
           end
           item
@@ -4878,13 +4872,11 @@ object Menu: TMenu
           item
             Expanded = False
             FieldName = 'REPARTO'
-            Width = 64
             Visible = True
           end
           item
             Expanded = False
             FieldName = 'SOTTOREP'
-            Width = 64
             Visible = True
           end>
       end
@@ -6485,7 +6477,6 @@ object Menu: TMenu
           item
             Expanded = False
             FieldName = 'COGNOME'
-            Width = 64
             Visible = True
           end
           item
@@ -6497,7 +6488,6 @@ object Menu: TMenu
           item
             Expanded = False
             FieldName = 'REPARTO'
-            Width = 64
             Visible = True
           end
           item
@@ -6510,7 +6500,6 @@ object Menu: TMenu
           item
             Expanded = False
             FieldName = 'DATAINTRO'
-            Width = 64
             Visible = True
           end>
       end
@@ -7068,7 +7057,6 @@ object Menu: TMenu
               Expanded = False
               FieldName = 'DATAINTRO'
               Title.Caption = 'DATA INTRO'
-              Width = 64
               Visible = True
             end>
         end
@@ -9841,25 +9829,21 @@ object Menu: TMenu
             item
               Expanded = False
               FieldName = 'BRAND'
-              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'TIPO'
-              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'MISURA'
-              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'COLORE'
-              Width = 64
               Visible = True
             end
             item
@@ -9876,25 +9860,21 @@ object Menu: TMenu
             item
               Expanded = False
               FieldName = 'DATASALDOCLI'
-              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'TIPOSALDOCLI'
-              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'OWNER'
-              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'VENDUTODA'
-              Width = 64
               Visible = True
             end>
         end

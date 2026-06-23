@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, Spin, Buttons, Mask, ExtCtrls, Grids, jpeg, api, Pickdate, StrUtils,
-  Riparazione;
+  Riparazione,Math;
 
 type
   // Oggetto riga articolo noleggiato
@@ -54,6 +54,7 @@ type
     procedure AddArticolo(ACli_no, AArt_no, ASched_no: Double);
     procedure AddOrUpdateArticolo(ACli_no, AArt_no, ASched_no: Double; const ADescrizione, AEancode2, AStagione, ABrand, ATipo, AMisura: string; AQta, AFlagReplay: Integer);
     procedure ClearArticoli;
+
   end;
 
   TNew_Sched = class(TForm)
@@ -152,17 +153,25 @@ type
     procedure BitBtn2Click(Sender: TObject);
     procedure BitBtn40Click(Sender: TObject);
     procedure MaskEdit8Exit(Sender: TObject);
+    procedure MaskEdit9Exit(Sender: TObject);
+    procedure MaskEdit8Enter(Sender: TObject);
+    procedure MaskEdit9Enter(Sender: TObject);
 
-  
 
   private
     FRipModule : TRipmodule;
+     FLastDayUse : Integer;
     procedure AggiornaDayUse;
     function  MaskToDate(const AMask: TMaskEdit; out ADate: TDateTime): Boolean;
     procedure AggiornaTotaleArticoli;
     procedure RebuildStringGrid;
     function  BuildArticoliJSON: string;
-   // function  PeriodoContieneWeekend(DataInizio, DataFine: TDateTime): Boolean;
+    function FormatMaskEuro(AValue: Double): string;
+    procedure RicalcolaNetto;
+    function FormatMaskSconto(AValue: Double): string;
+
+
+  // function  PeriodoContieneWeekend(DataInizio, DataFine: TDateTime): Boolean;
    // function  GetPrezzoUnitario(const ATipo: string; ADayUse: Integer; AHasWeekend: Boolean): Double;
    // procedure AggiornaTotaleArticoli;
    // procedure AggiornaTotaleArticoli_price;
@@ -330,6 +339,7 @@ end;   }
 
 procedure TNew_Sched.FormCreate(Sender: TObject);
 begin
+ FLastDayUse := 1;
   // Crea l'oggetto scheda
   Scheda := TScheda.Create;
 
@@ -357,11 +367,16 @@ begin
   Edit6.ReadOnly := True;
 
   // Importi
-  MaskEdit7.Text := #8364 + '     0,0';
-  MaskEdit7.ReadOnly := True;
-  MaskEdit8.Text := ' 0,0%';             // DISCOUNT
-  MaskEdit9.Text := #8364 + '     0,0';
-  MaskEdit9.ReadOnly := True;
+  //MaskEdit7.Text := #8364 + '     0,0';
+  MaskEdit7.Text := '€ ___0,0';
+
+ // MaskEdit7.ReadOnly := True;
+  MaskEdit8.Text := '__0,0%';
+  //MaskEdit9.Text := #8364 + '     0,0';
+  MaskEdit9.Text := '€ ___0,0';
+
+ // MaskEdit9.ReadOnly := True;
+
 
   // PAGATO
   CheckBox1.Checked  := False;
@@ -659,6 +674,7 @@ begin
   Scheda.DAYUSE        := SpinEdit1.Value;
   MaskEdit1.Text       := FormatDateTime('dd/mm/yyyy', NuovaData);
          }
+
 end;
 
 
@@ -965,6 +981,10 @@ procedure TNew_Sched.SpinEdit1Change(Sender: TObject);
 var
   NuovaData : TDateTime;
 begin
+// Esce subito se il valore non è cambiato rispetto all'ultimo elaborato
+  if SpinEdit1.Value = FLastDayUse then
+    Exit;
+
   // DATASTARTRENT deve essere presente
   if Scheda.DATASTARTRENT = 0 then
     Exit;
@@ -991,6 +1011,14 @@ begin
 
   // Aggiorna MaskEdit1 immediatamente
   MaskEdit1.Text := FormatDateTime('dd/mm/yyyy', NuovaData);
+
+  // Esce subito se il valore non è cambiato rispetto all'ultimo elaborato
+  if SpinEdit1.Value = FLastDayUse then
+    Exit;
+
+  FLastDayUse := SpinEdit1.Value;  // aggiorna il valore tracciato
+
+  AggiornaTotaleArticoli;
 end;
 
 procedure TNew_Sched.Button2Click(Sender: TObject);
@@ -1442,14 +1470,10 @@ end;
 // -------------------------------------------------------
 // Ricalcola totali chiamando API.pas
 // -------------------------------------------------------
+
 procedure TNew_Sched.AggiornaTotaleArticoli;
 var
-  Risposta   : TRispostaPrezzo;
-  ScontoPerc : Double;
-  ScontoStr  : string;
-  Sconto     : Double;
-  Netto      : Double;
-   JsonDebug : string;
+  Risposta : TRispostaPrezzo;
 begin
   if Scheda.DAYUSE < 1 then Exit;
 
@@ -1457,16 +1481,10 @@ begin
   begin
     Scheda.SUBTOTALE := 0;
     Scheda.NETPRICE  := 0;
-    // Rispetta il formato della maschera: '€ 9999;1;_'
-    MaskEdit7.Text := #8364 + '     0,0';
-    MaskEdit9.Text := #8364 + '     0,0';
-
+    MaskEdit7.Text   := FormatMaskEuro(0);
+    MaskEdit9.Text   := FormatMaskEuro(0);
     Exit;
   end;
-
-   // DEBUG — rimuovi dopo il test
-  JsonDebug := BuildArticoliJSON;
-  ShowMessage('JSON inviato al server:' + #13#10 + JsonDebug);
 
   if not CallCalcolaPrezzo(
            FormatDateTime('dd/mm/yyyy', Scheda.DATASTARTRENT),
@@ -1479,48 +1497,250 @@ begin
     Exit;
   end;
 
-  // Legge sconto da MaskEdit8 — formato 00,0%
-  ScontoPerc := 0;
-  ScontoStr  := StringReplace(MaskEdit8.Text, '%', '', [rfReplaceAll]);
-  ScontoStr  := StringReplace(ScontoStr,      '_', '', [rfReplaceAll]);
-  ScontoStr  := Trim(ScontoStr);
-  // Sostituisce la virgola con il separatore decimale del sistema
-  ScontoStr  := StringReplace(ScontoStr, ',', DecimalSeparator, [rfReplaceAll]);
-  TryStrToFloat(ScontoStr, ScontoPerc);
-
-  Sconto := Risposta.Subtotale * ScontoPerc / 100;
-  Netto  := Risposta.Subtotale - Sconto;
-
-  // Aggiorna scheda
   Scheda.SUBTOTALE := Risposta.Subtotale;
-  Scheda.DISCOUNT  := ScontoPerc;
-  Scheda.NETPRICE  := Netto;
-{
-  // --------------------------------------------------------
-  // Popola MaskEdit7 — formato maschera: € 9999 (4 cifre, no decimali)
-  // Tronca a intero e formatta con padding a 4 cifre
-  // --------------------------------------------------------
-  MaskEdit7.Text := #8364 + Format('%4d', [Round(Risposta.Subtotale)]);
+  MaskEdit7.Text   := FormatMaskEuro(Risposta.Subtotale);
 
-  // --------------------------------------------------------
-  // Popola MaskEdit9 — stesso formato di MaskEdit7
-  // --------------------------------------------------------
-  MaskEdit9.Text := #8364 + Format('%4d', [Round(Netto)]);
-}
-  // Subtotale — formato € 99999,0
-MaskEdit7.Text := #8364 + Format('%4d', [Round(Risposta.Subtotale)]);
-
-// Totale netto — stesso formato
-MaskEdit9.Text := #8364 + Format('%4d', [Round(Netto)]);
-
+  // Riusa la stessa logica di calcolo sconto
+  RicalcolaNetto;
 end;
 
 
 
+// --------------------------------------------------------
+// Formatta un valore float per la maschera "€ 99999,0"
+// produce es: "€  130,0" oppure "€ 1290,5"
+// --------------------------------------------------------
+function TNew_Sched.FormatMaskEuro(AValue: Double): string;
+var
+  Interi   : Integer;
+  Decimali : Integer;
+  SInteri  : string;
+  SDecimali: string;
+begin
+  Interi   := Trunc(AValue);
+  Decimali := Round((AValue - Interi) * 10);
+  if Decimali >= 10 then
+  begin
+    Inc(Interi);
+    Decimali := 0;
+  end;
+
+  SInteri   := Format('%5d', [Interi]);
+  SDecimali := IntToStr(Decimali);
+
+  Result := #8364 + SInteri + ',' + SDecimali;
+end;
+
+
+
+procedure TNew_Sched.RicalcolaNetto;
+var
+  ScontoPerc : Double;
+  ScontoStr  : string;
+  Sconto     : Double;
+  Netto      : Double;
+begin
+  ScontoStr := MaskEdit8.Text;
+  ShowMessage('GREZZO=[' + ScontoStr + ']  Len=' + IntToStr(Length(ScontoStr)));
+
+  ScontoStr := MaskEdit8.Text;
+  ScontoStr := StringReplace(ScontoStr, '%', '', [rfReplaceAll]);
+  ScontoStr := StringReplace(ScontoStr, '_', '', [rfReplaceAll]);
+  ScontoStr := StringReplace(ScontoStr, ' ', '', [rfReplaceAll]);
+  ScontoStr := Trim(ScontoStr);
+  ScontoStr := StringReplace(ScontoStr, ',', DecimalSeparator, [rfReplaceAll]);
+
+  if ScontoStr = '' then
+    ScontoStr := '0';
+
+  ScontoPerc := 0;
+  TryStrToFloat(ScontoStr, ScontoPerc);
+
+  // Sconto = SUBTOTALE * SCONTO% / 100
+  // Se SCONTO% è negativo, Sconto risulta negativo
+  // e Netto = SUBTOTALE - Sconto risulta MAGGIORE del subtotale
+  Sconto := Scheda.SUBTOTALE * ScontoPerc / 100;
+  Netto  := Scheda.SUBTOTALE - Sconto;
+
+  Scheda.DISCOUNT := ScontoPerc;
+  Scheda.NETPRICE := Netto;
+
+  MaskEdit9.Text := FormatMaskEuro(Netto);
+end;
+
+// -------------------------------------------------------
+// Formatta un valore percentuale (anche negativo) per
+// la maschera ###,0%. Negativo = maggiorazione.
+// produce es: "004,5"  oppure  "-15,0"  oppure "100,0"
+// -------------------------------------------------------
+function TNew_Sched.FormatMaskSconto(AValue: Double): string;
+var
+  Interi    : Integer;
+  Decimali  : Integer;
+  SInteri   : string;
+  SDecimali : string;
+  Segno     : string;
+begin
+  if AValue < 0 then
+    Segno := '-'
+  else
+    Segno := '';
+
+  AValue   := Abs(AValue);
+  Interi   := Trunc(AValue);
+  Decimali := Round((AValue - Interi) * 10);
+  if Decimali >= 10 then
+  begin
+    Inc(Interi);
+    Decimali := 0;
+  end;
+
+  SInteri := IntToStr(Interi);
+  while Length(SInteri) < 3 do
+    SInteri := '_' + SInteri;
+
+  SDecimali := IntToStr(Decimali);
+
+  Result := Segno + SInteri + ',' + SDecimali + '%';
+end;
+
 
 procedure TNew_Sched.MaskEdit8Exit(Sender: TObject);
+var
+  totoale,ScontoPerc : Double;
+  totalestr,ScontoStr  : string;
+
+  begin
+
+  // Pulizia completa: rimuove % e tutti gli '_' ovunque si trovino
+  ScontoStr := MaskEdit8.Text;
+  ScontoStr := StringReplace(ScontoStr, '%', '', [rfReplaceAll]);
+  ScontoStr := StringReplace(ScontoStr, '_', '', [rfReplaceAll]);
+  ScontoStr := StringReplace(ScontoStr, ' ', '', [rfReplaceAll]);  // rimuove spazi
+  ScontoStr := Trim(ScontoStr);
+  ScontoStr := StringReplace(ScontoStr, ',', DecimalSeparator, [rfReplaceAll]);
+
+  // Se rimane vuoto, considera 0
+  if ScontoStr = '' then
+  begin
+    ScontoStr := '0';
+    ScontoPerc := 0;
+   exit;
+  end;
+
+  if not TryStrToFloat(ScontoStr, ScontoPerc) then
+  begin
+    ShowMessage('Valore sconto non valido.');
+     MaskEdit8.Text := '0,0%';
+    ScontoPerc := 0;
+  end;
+
+  // Verifica il limite massimo
+  if ScontoPerc > 100 then
+  begin
+    ShowMessage('Lo sconto non può superare il 100%.');
+    ScontoPerc := 100;
+    MaskEdit8.Text := FormatMaskSconto(ScontoPerc) + '%';
+  end;
+
+  {if ScontoPerc < 0 then
+  begin
+    ScontoPerc := 0;
+    MaskEdit8.Text := FormatMaskSconto(ScontoPerc) + '%';
+  end; }
+
+//  RicalcolaNetto;
+
+   scheda.DISCOUNT:=scontoperc;
+   scheda.NETPRICE:=scheda.SUBTOTALE-(scheda.SUBTOTALE*scontoperc/100);
+
+
+
+   maskedit8.EditMask:='';
+   maskedit8.Text:=formatmasksconto(SCHEDA.DISCOUNT);
+   maskedit9.Text:=formatmaskeuro(scheda.NETPRICE);
+
+
+end;
+
+procedure TNew_Sched.MaskEdit9Exit(Sender: TObject);
+var
+  NettoStr   : string;
+  NettoVal   : Double;
+  ScontoPerc,ScontoArrot : Double;
 begin
-AggiornaTotaleArticoli;
+
+ { // Se non c'è subtotale, non ha senso calcolare lo sconto
+  if Scheda.SUBTOTALE <= 0 then
+  begin
+    MaskEdit9.Text := FormatMaskEuro(0);
+    Exit;
+  end; }
+
+  // Pulizia del testo inserito
+  NettoStr := MaskEdit9.Text;
+  NettoStr := StringReplace(NettoStr, #8364, '', [rfReplaceAll]);  // simbolo euro
+  NettoStr := StringReplace(NettoStr, '_',   '', [rfReplaceAll]);
+  NettoStr := StringReplace(NettoStr, ' ',   '', [rfReplaceAll]);
+  NettoStr := Trim(NettoStr);
+  NettoStr := StringReplace(NettoStr, ',', DecimalSeparator, [rfReplaceAll]);
+
+  if NettoStr = '' then
+    NettoStr := '0';
+
+  NettoVal := 0;
+  if not TryStrToFloat(NettoStr, NettoVal) then
+  begin
+    ShowMessage('Valore totale non valido.');
+    MaskEdit9.Text := FormatMaskEuro(Scheda.NETPRICE);
+    maskedit9.EditMask:='';
+    Exit;
+  end;
+
+
+  // Il totale non può essere negativo
+  if NettoVal < 0 then
+    NettoVal := 0;
+
+  // --------------------------------------------------------
+  // Calcola lo sconto percentuale corrispondente
+  // SCONTO% = (SUBTOTALE - NETTO) / SUBTOTALE * 100
+  // --------------------------------------------------------
+  ScontoPerc := (Scheda.SUBTOTALE - NettoVal) / Scheda.SUBTOTALE * 100;
+
+  // Arrotonda a 1 decimale per coerenza con la maschera
+  //ScontoPerc := Round(ScontoPerc * 10) / 10;
+ // ScontoArrot := Int(ScontoPerc * 10.0 + 0.5 * Sign(ScontoPerc)) / 10.0;
+
+  // Aggiorna scheda e controlli
+ // Scheda.DISCOUNT := ScontoPerc;
+ // Scheda.NETPRICE := NettoVal;
+
+   MaskEdit8.Text := FormatMaskSconto(ScontoPerc);
+   //maskedit9.EditMask:='€ 9999,0;1;_';
+
+
+  end;
+
+
+
+procedure TNew_Sched.MaskEdit8Enter(Sender: TObject);
+var temp:string;
+begin
+temp:=maskedit8.Text;
+maskedit8.Clear;
+maskedit8.EditMask:='999,0%;1;_';
+maskedit8.Text:=temp;
+
+end;
+
+procedure TNew_Sched.MaskEdit9Enter(Sender: TObject);
+var temp:string;
+begin
+temp:=maskedit9.Text;
+maskedit9.Clear;
+maskedit9.EditMask:='€ 9999,0;1;_';
+maskedit9.Text:=temp;
 end;
 
 initialization
