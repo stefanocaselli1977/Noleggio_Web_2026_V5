@@ -1,6 +1,6 @@
 object New_Sched: TNew_Sched
-  Left = 181
-  Top = 117
+  Left = 66
+  Top = 16
   Width = 1460
   Height = 781
   Caption = 'SCHEDA NOLEGGIO'
@@ -153,7 +153,7 @@ object New_Sched: TNew_Sched
     end
     object Bevel1: TBevel
       Left = 8
-      Top = 448
+      Top = 464
       Width = 1409
       Height = 17
       Shape = bsTopLine
@@ -253,22 +253,22 @@ object New_Sched: TNew_Sched
       Caption = 'ARTICOLI NOLEGGIATI'
     end
     object Label71: TLabel
-      Left = 1144
-      Top = 272
+      Left = 1152
+      Top = 408
       Width = 49
       Height = 13
       Caption = 'ARTICOLI'
     end
     object Label73: TLabel
-      Left = 1144
-      Top = 328
+      Left = 1256
+      Top = 408
       Width = 39
       Height = 13
       Caption = 'APERTI'
     end
     object Label72: TLabel
-      Left = 1144
-      Top = 384
+      Left = 1360
+      Top = 408
       Width = 36
       Height = 13
       Caption = 'CHIUSI'
@@ -289,14 +289,14 @@ object New_Sched: TNew_Sched
     end
     object Label19: TLabel
       Left = 8
-      Top = 456
+      Top = 472
       Width = 30
       Height = 13
       Caption = 'NOTE'
     end
     object Image1: TImage
-      Left = 1368
-      Top = 192
+      Left = 1152
+      Top = 352
       Width = 49
       Height = 41
       Picture.Data = {
@@ -626,7 +626,7 @@ object New_Sched: TNew_Sched
       Left = 1144
       Top = 168
       Width = 225
-      Height = 81
+      Height = 193
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -24
@@ -635,6 +635,29 @@ object New_Sched: TNew_Sched
       ParentFont = False
       ScrollBars = ssVertical
       TabOrder = 21
+    end
+    object StringGrid1: TStringGrid
+      Left = 8
+      Top = 168
+      Width = 1121
+      Height = 265
+      ColCount = 9
+      DefaultColWidth = 120
+      RowCount = 2
+      TabOrder = 20
+      OnDrawCell = StringGrid1DrawCell
+      OnEnter = StringGrid1Enter
+      OnExit = StringGrid1Exit
+      ColWidths = (
+        120
+        70
+        92
+        174
+        167
+        279
+        63
+        64
+        63)
     end
     object Edit4: TEdit
       Left = 8
@@ -852,8 +875,8 @@ object New_Sched: TNew_Sched
       OnClick = Button4Click
     end
     object Edit14: TEdit
-      Left = 1144
-      Top = 288
+      Left = 1152
+      Top = 424
       Width = 49
       Height = 37
       Color = clYellow
@@ -868,8 +891,8 @@ object New_Sched: TNew_Sched
       Text = '0'
     end
     object Edit16: TEdit
-      Left = 1144
-      Top = 344
+      Left = 1256
+      Top = 424
       Width = 49
       Height = 37
       Color = clRed
@@ -884,8 +907,8 @@ object New_Sched: TNew_Sched
       Text = '0'
     end
     object Edit15: TEdit
-      Left = 1144
-      Top = 400
+      Left = 1360
+      Top = 424
       Width = 49
       Height = 37
       Color = clLime
@@ -900,8 +923,8 @@ object New_Sched: TNew_Sched
       Text = '0'
     end
     object BitBtn1: TBitBtn
-      Left = 1232
-      Top = 336
+      Left = 160
+      Top = 416
       Width = 137
       Height = 41
       Caption = 'ELIMINA'
@@ -929,8 +952,8 @@ object New_Sched: TNew_Sched
       NumGlyphs = 2
     end
     object BitBtn2: TBitBtn
-      Left = 1232
-      Top = 400
+      Left = 304
+      Top = 416
       Width = 137
       Height = 41
       Caption = 'RESETTA'
@@ -958,8 +981,8 @@ object New_Sched: TNew_Sched
       NumGlyphs = 2
     end
     object BitBtn40: TBitBtn
-      Left = 1232
-      Top = 272
+      Left = 16
+      Top = 416
       Width = 137
       Height = 41
       Caption = 'RIPARA'
@@ -986,32 +1009,9 @@ object New_Sched: TNew_Sched
         33337F73FF737773333307800077033333337337773373333333}
       NumGlyphs = 2
     end
-    object StringGrid1: TStringGrid
-      Left = 8
-      Top = 168
-      Width = 1121
-      Height = 265
-      ColCount = 9
-      DefaultColWidth = 120
-      RowCount = 2
-      TabOrder = 20
-      OnDrawCell = StringGrid1DrawCell
-      OnEnter = StringGrid1Enter
-      OnExit = StringGrid1Exit
-      ColWidths = (
-        120
-        70
-        92
-        174
-        167
-        279
-        63
-        64
-        63)
-    end
     object Panel1: TPanel
       Left = 1064
-      Top = 457
+      Top = 473
       Width = 345
       Height = 112
       BevelOuter = bvLowered
@@ -1038,7 +1038,7 @@ object New_Sched: TNew_Sched
         Caption = 'SUBTOTALE'
       end
       object Label18: TLabel
-        Left = 197
+        Left = 205
         Top = 11
         Width = 42
         Height = 13
@@ -1063,7 +1063,7 @@ object New_Sched: TNew_Sched
       object MaskEdit8: TMaskEdit
         Left = 112
         Top = 27
-        Width = 77
+        Width = 89
         Height = 37
         EditMask = '999,0%;1;_'
         Font.Charset = ANSI_CHARSET
@@ -1079,7 +1079,7 @@ object New_Sched: TNew_Sched
         OnExit = MaskEdit8Exit
       end
       object MaskEdit9: TMaskEdit
-        Left = 199
+        Left = 207
         Top = 25
         Width = 125
         Height = 47
@@ -1115,7 +1115,7 @@ object New_Sched: TNew_Sched
     end
     object NOTE: TMemo
       Left = 8
-      Top = 472
+      Top = 488
       Width = 1041
       Height = 97
       Font.Charset = DEFAULT_CHARSET
@@ -1128,8 +1128,8 @@ object New_Sched: TNew_Sched
       TabOrder = 23
     end
     object Button5: TButton
-      Left = 1144
-      Top = 240
+      Left = 1288
+      Top = 368
       Width = 75
       Height = 25
       Caption = 'CANCELLA'
