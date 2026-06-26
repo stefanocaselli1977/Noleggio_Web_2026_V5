@@ -62,7 +62,8 @@ uses
   uAppPaths in 'uAppPaths.pas',
   otpcheck in 'otpcheck.pas' {checkotp},
   api in 'api.pas',
-  NewSchedRent in 'NewSchedRent.pas' {New_Sched};
+  NewSchedRent in 'NewSchedRent.pas' {New_Sched},
+  SchedTypes in 'SchedTypes.pas';
 
 //  LogInDatabase in 'LogInDatabase.pas' {PasswordDlg};
 

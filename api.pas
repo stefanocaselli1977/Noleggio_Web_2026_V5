@@ -3,7 +3,7 @@ unit api;
 interface
 
 uses
-  Windows, IdHTTP, SysUtils, Classes,Dialogs;
+  Windows, IdHTTP, SysUtils, Classes,Dialogs,SchedTypes;
 
 // -------------------------------------------------------
 // Record per contenere i dati di ogni prodotto
@@ -28,13 +28,15 @@ type
 
   TProductArray = array of TProduct;
 
-  TRispostaRiparazione = record
-    Success    : Boolean;
-    ErrorMessage: string;
-    RIP_NO     : Integer;
-    EANCODERIP : string;
-    Messaggio  : string;
-  end;
+   // Aggiungi i campi EAN al record risposta
+TRispostaSalvaScheda = record
+  Success   : Boolean;
+  ErrorMsg  : string;
+  SCHED_NO  : Double;
+  EANCODE   : string;
+  EANCODE2  : string;
+  Messaggio : string;
+end;
 
   TRigaPrezzo = record
     Tipo       : string;
@@ -43,12 +45,7 @@ type
     Subtotale  : Double;
   end;
 
-  TRispostaPrezzo = record
-    Success    : Boolean;
-    Righe      : array of TRigaPrezzo;
-    Subtotale  : Double;
-    ErrorMsg   : string;
-  end;
+ 
 
 
   // -------------------------------------------------------
@@ -91,6 +88,22 @@ type
     Invalidi       : array of string;
   end;
 
+ TRispostaRiparazione = record
+  Success      : Boolean;
+  ErrorMessage : string;
+  RIP_NO       : Integer;
+  EANCODERIP   : string;
+  Messaggio    : string;
+end;
+
+
+TRispostaPrezzo = record
+  Success    : Boolean;
+  Righe      : array of TRigaPrezzo;
+  Subtotale  : Double;
+  ErrorMsg   : string;
+end;
+ 
 
 
 
@@ -102,6 +115,7 @@ function InserisciRiparazione(ACli_no: Integer;  const ATipo  : string;  const A
 function CallCalcolaPrezzo(  const ADataStart : string;  const ADataTake:string;  ADayUse: Integer; const AArticoli  : string;  out   ARisposta  : TRispostaPrezzo): Boolean;
 function ExtractJsonObject(const AJson, AKey: string): string;
 function GetLastJsonValue(const AJson, AKey: string): string;
+function SalvaScheda(const AScheda: TScheda;  const APrefSchedNo : string; out ARisposta: TRispostaSalvaScheda): Boolean;
 
 
 
@@ -918,6 +932,130 @@ begin
   until Pos1 >= Length(AJson);
 
   Result := LastResult;
+end;
+
+
+function SalvaScheda(const AScheda: TScheda; const APrefSchedNo : string; out ARisposta: TRispostaSalvaScheda): Boolean;
+const
+  API_URL = 'http://serverps3:8081/RentCustomers/insert_schedule.php';
+var
+  IdHTTP      : TIdHTTP;
+  Stream      : TStringStream;
+  ResponseStr : string;
+  DataJson    : string;
+  Body        : string;
+  SuccessStr  : string;
+  ArticoliJson: string;
+  i           : Integer;
+  ValStr      : string;
+
+  // Costruisce il JSON dell'array articoli
+  function BuildArticoliJsonSave: string;
+  var
+    j : Integer;
+  begin
+    Result := '[';
+    for j := 0 to High(AScheda.Articoli) do
+    begin
+      Result := Result +
+        '{' +
+        '"CLI_NO":'  + FloatToStr(AScheda.Articoli[j].CLI_NO)  + ',' +
+        '"ART_NO":'  + FloatToStr(AScheda.Articoli[j].ART_NO)  + ',' +
+        '"SCHED_NO":0' +   // il server lo sostituisce con il valore reale
+        '}';
+      if j < High(AScheda.Articoli) then
+        Result := Result + ',';
+    end;
+    Result := Result + ']';
+  end;
+
+begin
+  Result := False;
+  ARisposta.Success  := False;
+  ARisposta.ErrorMsg := '';
+  ARisposta.SCHED_NO := 0;
+  ARisposta.Messaggio := '';
+  // Dopo la lettura di SCHED_NO
+  ARisposta.EANCODE  := GetJsonValue(DataJson, 'EANCODE');
+  ARisposta.EANCODE2 := GetJsonValue(DataJson, 'EANCODE2');
+
+  // Costruisce il body JSON
+  Body :=
+    '{'                                                                          +
+    '"CLI_NO":'        + FloatToStr(AScheda.CLI_NO)                   + ','     +
+    '"DATASTARTRENT":"'+ FormatDateTime('dd/mm/yyyy hh:nn:ss',
+                           AScheda.DATASTARTRENT)                     + '",'    +
+    '"DATATAKEBACK":"' + FormatDateTime('dd/mm/yyyy hh:nn:ss',
+                           AScheda.DATATAKEBACK)                      + '",'    +
+    '"OWNER":"'        + AScheda.OWNER                                + '",'    +
+    '"NOTE":"'         + AScheda.NOTE                                 + '",'    +
+    '"STATO":"'        + AScheda.STATO                                + '",'    +
+    '"STATO_CONS":"'   + AScheda.STATO_CONS                           + '",'    +
+    '"SUBTOTALE":'     + FloatToStr(AScheda.SUBTOTALE)                + ','     +
+    '"DISCOUNT":'      + FloatToStr(AScheda.DISCOUNT)                 + ','     +
+    '"NETPRICE":'      + FloatToStr(AScheda.NETPRICE)                 + ','     +
+    '"DAYUSE":'        + IntToStr(AScheda.DAYUSE)                     + ','     +
+    '"PAGATO":'        + IntToStr(Ord(AScheda.PAGATO))                + ','     +
+    '"DATAINTRO":"'    + FormatDateTime('dd/mm/yyyy hh:nn:ss',
+                           AScheda.DATAINTRO)                         + '",'    +
+    '"EANCODE2":"'     + AScheda.EANCODE2                             + '",'    +
+    '"PREF_SCHED_NO":' +  IntToStr(StrToIntDef(APrefSchedNo, 1)) + ','  +
+    '"ARTICOLI":'      + BuildArticoliJsonSave                                  +
+    '}';
+   ShowMessage('Body inviato:' + #13#10 + Body);
+  IdHTTP := TIdHTTP.Create(nil);
+  Stream := TStringStream.Create(Body);
+  try
+    try
+      IdHTTP.HandleRedirects     := True;
+      IdHTTP.ConnectTimeout      := 10000;
+      IdHTTP.ReadTimeout         := 30000;
+      IdHTTP.Request.ContentType := 'application/json';
+      IdHTTP.Request.Accept      := 'application/json';
+
+      ResponseStr := IdHTTP.Post(API_URL, Stream);
+
+    except
+      on E: EIdHTTPProtocolException do
+      begin
+        ARisposta.ErrorMsg := 'Errore HTTP ' +
+                              IntToStr(IdHTTP.ResponseCode) + ': ' + E.Message;
+        Exit;
+      end;
+      on E: Exception do
+      begin
+        ARisposta.ErrorMsg := 'Errore connessione: ' + E.Message;
+        Exit;
+      end;
+    end;
+
+    SuccessStr := LowerCase(Trim(GetJsonValue(ResponseStr, 'success')));
+    if SuccessStr <> 'true' then
+    begin
+      ARisposta.ErrorMsg := GetJsonValue(ResponseStr, 'error');
+      Exit;
+    end;
+
+    DataJson := ExtractJsonObject(ResponseStr, 'data');
+    if DataJson = '' then
+      DataJson := ResponseStr;
+
+    ValStr := GetJsonValue(DataJson, 'SCHED_NO');
+    ValStr := StringReplace(ValStr, '.', DecimalSeparator, [rfReplaceAll]);
+    try
+      ARisposta.SCHED_NO := StrToFloat(ValStr);
+    except
+      ARisposta.SCHED_NO := 0;
+    end;
+
+    ARisposta.Messaggio := GetJsonValue(DataJson, 'messaggio');
+    ARisposta.Success   := True;
+    Result              := True;
+
+  finally
+    Stream.Free;
+    IdHTTP.Free;
+  end;
 end;
 
 

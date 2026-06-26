@@ -5,11 +5,11 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, Spin, Buttons, Mask, ExtCtrls, Grids, jpeg, api, Pickdate, StrUtils,
-  Riparazione,Math;
+  Riparazione,Math,SchedTypes, account;
 
 type
   // Oggetto riga articolo noleggiato
-  TSchedArticolo = class
+ { TSchedArticolo = class
   public
     CLI_NO      : Double;
     ART_NO      : Double;
@@ -22,10 +22,11 @@ type
     MISURA      : string;
     QTA         : Integer;
     FLAGREPLAY  : Integer;
-  end;
+  end;           }
+
 
   // Oggetto scheda principale
-  TScheda = class
+ { TScheda = class
   public
     SCHED_NO      : Double;
     CLI_NO        : Double;
@@ -55,7 +56,7 @@ type
     procedure AddOrUpdateArticolo(ACli_no, AArt_no, ASched_no: Double; const ADescrizione, AEancode2, AStagione, ABrand, ATipo, AMisura: string; AQta, AFlagReplay: Integer);
     procedure ClearArticoli;
 
-  end;
+  end;                    }
 
   TNew_Sched = class(TForm)
     GroupBox1: TGroupBox;
@@ -120,7 +121,6 @@ type
     Label18: TLabel;
     NOTE: TMemo;
     Label19: TLabel;
-    Button5: TButton;
     BTNSALVA3: TBitBtn;
     BTNMODIFICA3: TBitBtn;
     BTNELIMINA3: TBitBtn;
@@ -128,6 +128,7 @@ type
     BitBtn14: TBitBtn;
     Preview2: TCheckBox;
     Image1: TImage;
+    Image2: TImage;
 
     procedure FormCreate(Sender: TObject);
     procedure StringGrid1DrawCell(Sender: TObject; ACol, ARow: Integer;
@@ -143,7 +144,6 @@ type
     procedure StringGrid1Exit(Sender: TObject);
     procedure StringGrid1Enter(Sender: TObject);
     procedure Image1Click(Sender: TObject);
-    procedure Button5Click(Sender: TObject);
     procedure SpinEdit1Change(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
@@ -156,6 +156,8 @@ type
     procedure MaskEdit9Exit(Sender: TObject);
     procedure MaskEdit8Enter(Sender: TObject);
     procedure MaskEdit9Enter(Sender: TObject);
+    procedure Image2Click(Sender: TObject);
+    procedure BTNSALVA3Click(Sender: TObject);
 
 
   private
@@ -169,8 +171,7 @@ type
     function FormatMaskEuro(AValue: Double): string;
     procedure RicalcolaNetto;
     function FormatMaskSconto(AValue: Double): string;
-
-
+    
   // function  PeriodoContieneWeekend(DataInizio, DataFine: TDateTime): Boolean;
    // function  GetPrezzoUnitario(const ATipo: string; ADayUse: Integer; AHasWeekend: Boolean): Double;
    // procedure AggiornaTotaleArticoli;
@@ -195,7 +196,7 @@ uses SoftHire;
 
 { TScheda }
 
-constructor TScheda.Create;
+{constructor TScheda.Create;
 begin
   inherited;
   STATO      := 'INUTILIZZATA';
@@ -213,9 +214,9 @@ destructor TScheda.Destroy;
 begin
   ClearArticoli;
   inherited;
-end;
+end;      }
 
-procedure TScheda.AddArticolo(ACli_no, AArt_no, ASched_no: Double);
+{procedure TScheda.AddArticolo(ACli_no, AArt_no, ASched_no: Double);
 var
   Articolo: TSchedArticolo;
   Idx: Integer;
@@ -227,9 +228,9 @@ begin
   Idx := Length(Articoli);
   SetLength(Articoli, Idx + 1);
   Articoli[Idx] := Articolo;
-end;
+end;     }
 
-procedure TScheda.ClearArticoli;
+{procedure TScheda.ClearArticoli;
 var
   I: Integer;
 begin
@@ -237,7 +238,7 @@ begin
     Articoli[I].Free;
   SetLength(Articoli, 0);
 end;
-
+ }
 
 
 procedure TNew_Sched.RebuildStringGrid;
@@ -284,6 +285,7 @@ begin
 //  AggiornaTotaleArticoli;
 end;
 
+//vecchia funzione da eliminare
 {procedure TScheda.AddOrUpdateArticolo(ACli_no, AArt_no, ASched_no: Double;
   const ADescrizione, AStagione, ABrand, ATipo, AMisura: string;
   AQta, AFlagReplay: Integer);
@@ -331,6 +333,9 @@ begin
     Articoli[Idx] := Articolo;
   end;
 end;   }
+
+//vecchia funzione da eliminare
+
 
 { TNew_Sched }
 
@@ -783,7 +788,7 @@ begin
 
 end;
 
-
+{
 procedure TScheda.AddOrUpdateArticolo(ACli_no, AArt_no, ASched_no: Double;
   const ADescrizione, AEancode2, AStagione, ABrand, ATipo, AMisura: string;
   AQta, AFlagReplay: Integer);
@@ -839,7 +844,7 @@ begin
     SetLength(Articoli, Idx + 1);
     Articoli[Idx] := Articolo;
   end;
-end;
+end;     }
 
 procedure Image1Click(Sender: TObject);
 begin
@@ -970,11 +975,6 @@ ShowMessage(Msg);
 
     ShowMessage(Msg);
   end;
-end;
-
-procedure TNew_Sched.Button5Click(Sender: TObject);
-begin
-carica_scarica.Clear;
 end;
 
 procedure TNew_Sched.SpinEdit1Change(Sender: TObject);
@@ -1741,6 +1741,70 @@ temp:=maskedit9.Text;
 maskedit9.Clear;
 maskedit9.EditMask:='€ 9999,0;1;_';
 maskedit9.Text:=temp;
+end;
+
+procedure TNew_Sched.Image2Click(Sender: TObject);
+begin
+carica_scarica.Clear;
+end;
+
+
+procedure TNew_Sched.BTNSALVA3Click(Sender: TObject);
+var
+  Risposta     : TRispostaSalvaScheda;
+  SchedNoStr   : string;
+  PrefSchedNo  : Integer;
+begin
+  if Scheda.CLI_NO <= 0 then
+  begin
+    ShowMessage('Cliente non impostato.');
+    Exit;
+  end;
+
+  if Scheda.DATASTARTRENT = 0 then
+  begin
+    ShowMessage('Data inizio noleggio non impostata.');
+    Exit;
+  end;
+
+  if Scheda.DATATAKEBACK = 0 then
+  begin
+    ShowMessage('Data rientro non impostata.');
+    Exit;
+  end;
+
+  // Stato in base agli articoli
+  if Length(Scheda.Articoli) = 0 then
+    Scheda.STATO := 'INUTILIZZATA'
+  else
+    Scheda.STATO := 'APERTA';
+
+    PrefSchedNo := StrToIntDef(DM.IBDataSetParamPRE_SCHED_NO.AsString, 1);
+
+  Scheda.STATO_CONS := 'REGOLARE';
+  Scheda.OWNER      := Account.Operatore;  // adatta al tuo oggetto Account
+  Scheda.NOTE       := NOTE.Lines.Text;
+
+  //PrefSchedNo := StrToIntDef(DM.IBDataSetParamPRE_SCHED_NO.AsString, 1);
+
+  if not SalvaScheda(Scheda, DM.IBDataSetParamPRE_SCHED_NO.AsString, Risposta) then
+  begin
+    ShowMessage('Errore salvataggio: ' + Risposta.ErrorMsg);
+    Exit;
+  end;
+
+  // Aggiorna scheda con i dati restituiti dal server
+  Scheda.SCHED_NO := Risposta.SCHED_NO;
+  Scheda.EANCODE1 := Risposta.EANCODE;
+  Scheda.EANCODE2 := Risposta.EANCODE2;
+
+  SchedNoStr     := IntToStr(Round(Risposta.SCHED_NO));
+  Edit4.Text     := SchedNoStr;
+
+  ShowMessage('Scheda salvata correttamente.' + #13#10 +
+              'SCHED_NO : ' + SchedNoStr       + #13#10 +
+              'EANCODE  : ' + Risposta.EANCODE  + #13#10 +
+              'EANCODE2 : ' + Risposta.EANCODE2);
 end;
 
 initialization
