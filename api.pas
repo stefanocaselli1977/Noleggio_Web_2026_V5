@@ -103,8 +103,6 @@ TRispostaPrezzo = record
   Subtotale  : Double;
   ErrorMsg   : string;
 end;
- 
-
 
 
 function SendSmsOtp(const ATipo: string; const ANCell: string; const AOtp: Integer): string;
@@ -116,11 +114,13 @@ function CallCalcolaPrezzo(  const ADataStart : string;  const ADataTake:string;
 function ExtractJsonObject(const AJson, AKey: string): string;
 function GetLastJsonValue(const AJson, AKey: string): string;
 function SalvaScheda(const AScheda: TScheda;  const APrefSchedNo : string; out ARisposta: TRispostaSalvaScheda): Boolean;
+function GetSchedule(ASchedNo: Double; out ARisposta: TRispostaGetSchedule): Boolean;
 
 
 
 
 implementation
+
 
 
 function InserisciRiparazione(
@@ -1057,6 +1057,152 @@ begin
     IdHTTP.Free;
   end;
 end;
+
+function GetSchedule(ASchedNo: Double; out ARisposta: TRispostaGetSchedule): Boolean;
+const
+  API_URL = 'http://serverps3:8081/RentCustomers/get_schedule.php';
+var
+  IdHTTP      : TIdHTTP;
+  Stream      : TStringStream;
+  ResponseStr : string;
+  Body        : string;
+  SuccessStr  : string;
+  SchedaJson  : string;
+  ArticoliJson: string;
+  ObjList     : TStringList;
+  i           : Integer;
+  ValStr      : string;
+begin
+  Result := False;
+
+  ARisposta.Success := False;
+  ARisposta.ErrorMsg := '';
+  SetLength(ARisposta.Articoli, 0);
+
+  Body := '{"SCHED_NO":' + FloatToStr(ASchedNo) + '}';
+
+  IdHTTP  := TIdHTTP.Create(nil);
+  Stream  := TStringStream.Create(Body);
+  ObjList := TStringList.Create;
+  try
+    try
+      IdHTTP.HandleRedirects     := True;
+      IdHTTP.ConnectTimeout      := 10000;
+      IdHTTP.ReadTimeout         := 30000;
+      IdHTTP.Request.ContentType := 'application/json';
+      IdHTTP.Request.Accept      := 'application/json';
+
+      ResponseStr := IdHTTP.Post(API_URL, Stream);
+
+    except
+      on E: EIdHTTPProtocolException do
+      begin
+        ARisposta.ErrorMsg := 'Errore HTTP ' +
+                              IntToStr(IdHTTP.ResponseCode) + ': ' + E.Message;
+        Exit;
+      end;
+      on E: Exception do
+      begin
+        ARisposta.ErrorMsg := 'Errore connessione: ' + E.Message;
+        Exit;
+      end;
+    end;
+
+    SuccessStr := LowerCase(Trim(GetJsonValue(ResponseStr, 'success')));
+    if SuccessStr <> 'true' then
+    begin
+      ARisposta.ErrorMsg := GetJsonValue(ResponseStr, 'error');
+      Exit;
+    end;
+
+    // Estrae blocco "data"
+    SchedaJson := ExtractJsonObject(ResponseStr, 'data');
+    if SchedaJson = '' then
+      SchedaJson := ResponseStr;
+
+    // Estrae blocco "scheda"
+    SchedaJson := ExtractJsonObject(SchedaJson, 'scheda');
+
+    // Popola i campi della risposta
+    ValStr := GetJsonValue(SchedaJson, 'SCHED_NO');
+    ValStr := StringReplace(ValStr, '.', DecimalSeparator, [rfReplaceAll]);
+    try ARisposta.SCHED_NO := StrToFloat(ValStr); except ARisposta.SCHED_NO := 0; end;
+
+    ValStr := GetJsonValue(SchedaJson, 'CLI_NO');
+    ValStr := StringReplace(ValStr, '.', DecimalSeparator, [rfReplaceAll]);
+    try ARisposta.CLI_NO := StrToFloat(ValStr); except ARisposta.CLI_NO := 0; end;
+
+    ARisposta.NOMCOGNCLI    := GetJsonValue(SchedaJson, 'NOMCOGNCLI');
+    ARisposta.INDIRIZZO     := GetJsonValue(SchedaJson, 'INDIRIZZO');
+    ARisposta.OWNER         := GetJsonValue(SchedaJson, 'OWNER');
+    ARisposta.DATASTARTRENT := GetJsonValue(SchedaJson, 'DATASTARTRENT');
+    ARisposta.DATATAKEBACK  := GetJsonValue(SchedaJson, 'DATATAKEBACK');
+    ARisposta.DATACLOSESCHD := GetJsonValue(SchedaJson, 'DATACLOSESCHD');
+    ARisposta.NOTE          := GetJsonValue(SchedaJson, 'NOTE');
+    ARisposta.STATO         := GetJsonValue(SchedaJson, 'STATO');
+    ARisposta.STATO_CONS    := GetJsonValue(SchedaJson, 'STATO_CONS');
+    ARisposta.EANCODE2      := GetJsonValue(SchedaJson, 'EANCODE2');
+    ARisposta.DATAINTRO     := GetJsonValue(SchedaJson, 'DATAINTRO');
+
+    ValStr := GetJsonValue(SchedaJson, 'SUBTOTALE');
+    ValStr := StringReplace(ValStr, '.', DecimalSeparator, [rfReplaceAll]);
+    try ARisposta.SUBTOTALE := StrToFloat(ValStr); except ARisposta.SUBTOTALE := 0; end;
+
+    ValStr := GetJsonValue(SchedaJson, 'DISCOUNT');
+    ValStr := StringReplace(ValStr, '.', DecimalSeparator, [rfReplaceAll]);
+    try ARisposta.DISCOUNT := StrToFloat(ValStr); except ARisposta.DISCOUNT := 0; end;
+
+    ValStr := GetJsonValue(SchedaJson, 'NETPRICE');
+    ValStr := StringReplace(ValStr, '.', DecimalSeparator, [rfReplaceAll]);
+    try ARisposta.NETPRICE := StrToFloat(ValStr); except ARisposta.NETPRICE := 0; end;
+
+    try ARisposta.DAYUSE   := StrToInt(GetJsonValue(SchedaJson, 'DAYUSE'));
+    except ARisposta.DAYUSE := 0; end;
+
+    try ARisposta.PAGATO   := GetJsonValue(SchedaJson, 'PAGATO') = '1';
+    except ARisposta.PAGATO := False; end;
+
+    try ARisposta.RITARDO  := StrToInt(GetJsonValue(SchedaJson, 'RITARDO'));
+    except ARisposta.RITARDO := 0; end;
+
+    // --------------------------------------------------------
+    // Parsing array articoli
+    // --------------------------------------------------------
+    ArticoliJson := ExtractJsonArray(ResponseStr, 'articoli');
+    if ArticoliJson <> '' then
+    begin
+      SplitJsonObjects(ArticoliJson, ObjList);
+      SetLength(ARisposta.Articoli, ObjList.Count);
+
+      for i := 0 to ObjList.Count - 1 do
+      begin
+        ValStr := GetJsonValue(ObjList[i], 'ART_NO');
+        ValStr := StringReplace(ValStr, '.', DecimalSeparator, [rfReplaceAll]);
+        try ARisposta.Articoli[i].ART_NO := StrToFloat(ValStr);
+        except ARisposta.Articoli[i].ART_NO := 0; end;
+
+        ARisposta.Articoli[i].EANCODE     := GetJsonValue(ObjList[i], 'EANCODE');
+        ARisposta.Articoli[i].STAGIONE    := GetJsonValue(ObjList[i], 'STAGIONE');
+        ARisposta.Articoli[i].DESCRIZIONE := GetJsonValue(ObjList[i], 'DESCRIZIONE');
+        ARisposta.Articoli[i].BRAND       := GetJsonValue(ObjList[i], 'BRAND');
+        ARisposta.Articoli[i].TIPO        := GetJsonValue(ObjList[i], 'TIPO');
+        ARisposta.Articoli[i].MISURA      := GetJsonValue(ObjList[i], 'MISURA');
+
+        try ARisposta.Articoli[i].QTA := StrToInt(GetJsonValue(ObjList[i], 'QTA'));
+        except ARisposta.Articoli[i].QTA := 1; end;
+      end;
+    end;
+
+    ARisposta.Success := True;
+    Result            := True;
+
+  finally
+    ObjList.Free;
+    Stream.Free;
+    IdHTTP.Free;
+  end;
+end;
+
 
 
 

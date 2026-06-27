@@ -1,6 +1,6 @@
 object Menu: TMenu
-  Left = 293
-  Top = 103
+  Left = 263
+  Top = 219
   AutoSize = True
   BorderStyle = bsSingle
   Caption = 'Menu'
@@ -27,9 +27,9 @@ object Menu: TMenu
     Top = 0
     Width = 1000
     Height = 690
-    ActivePage = TabSheet3
+    ActivePage = TabSheet5
     Anchors = []
-    TabIndex = 2
+    TabIndex = 4
     TabOrder = 0
     OnChanging = PageControl1Changing
     object TabSheet1: TTabSheet
@@ -1895,26 +1895,31 @@ object Menu: TMenu
             item
               Expanded = False
               FieldName = 'NOME'
+              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'INDIRIZZO'
+              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'CITTA'
+              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'PAESE'
+              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'N_DOC'
+              Width = 64
               Visible = True
             end>
         end
@@ -4742,6 +4747,7 @@ object Menu: TMenu
           item
             Expanded = False
             FieldName = 'DESCRIZIONE'
+            Width = 64
             Visible = True
           end
           item
@@ -4872,11 +4878,13 @@ object Menu: TMenu
           item
             Expanded = False
             FieldName = 'REPARTO'
+            Width = 64
             Visible = True
           end
           item
             Expanded = False
             FieldName = 'SOTTOREP'
+            Width = 64
             Visible = True
           end>
       end
@@ -5346,7 +5354,7 @@ object Menu: TMenu
         Width = 111
         Height = 21
         Style = csDropDownList
-        ItemHeight = 0
+        ItemHeight = 13
         TabOrder = 9
         OnEnter = ComboBox17Enter
         OnSelect = ComboBox17Select
@@ -6477,6 +6485,7 @@ object Menu: TMenu
           item
             Expanded = False
             FieldName = 'COGNOME'
+            Width = 64
             Visible = True
           end
           item
@@ -6488,6 +6497,7 @@ object Menu: TMenu
           item
             Expanded = False
             FieldName = 'REPARTO'
+            Width = 64
             Visible = True
           end
           item
@@ -6500,6 +6510,7 @@ object Menu: TMenu
           item
             Expanded = False
             FieldName = 'DATAINTRO'
+            Width = 64
             Visible = True
           end>
       end
@@ -7057,6 +7068,7 @@ object Menu: TMenu
               Expanded = False
               FieldName = 'DATAINTRO'
               Title.Caption = 'DATA INTRO'
+              Width = 64
               Visible = True
             end>
         end
@@ -9829,21 +9841,25 @@ object Menu: TMenu
             item
               Expanded = False
               FieldName = 'BRAND'
+              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'TIPO'
+              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'MISURA'
+              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'COLORE'
+              Width = 64
               Visible = True
             end
             item
@@ -9860,21 +9876,25 @@ object Menu: TMenu
             item
               Expanded = False
               FieldName = 'DATASALDOCLI'
+              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'TIPOSALDOCLI'
+              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'OWNER'
+              Width = 64
               Visible = True
             end
             item
               Expanded = False
               FieldName = 'VENDUTODA'
+              Width = 64
               Visible = True
             end>
         end

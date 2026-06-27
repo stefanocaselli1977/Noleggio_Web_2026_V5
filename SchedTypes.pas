@@ -3,6 +3,45 @@ unit SchedTypes;
 interface
 
 type
+
+TArticoloRet = record
+  ART_NO      : Double;
+  EANCODE     : string;
+  STAGIONE    : string;
+  DESCRIZIONE : string;
+  BRAND       : string;
+  TIPO        : string;
+  MISURA      : string;
+  QTA         : Integer;
+end;
+
+TRispostaGetSchedule = record
+  Success       : Boolean;
+  ErrorMsg      : string;
+  // Dati scheda
+  SCHED_NO      : Double;
+  CLI_NO        : Double;
+  NOMCOGNCLI    : string;
+  INDIRIZZO     : string;
+  OWNER         : string;
+  DATASTARTRENT : string;
+  DATATAKEBACK  : string;
+  DATACLOSESCHD : string;
+  NOTE          : string;
+  STATO         : string;
+  STATO_CONS    : string;
+  SUBTOTALE     : Double;
+  DISCOUNT      : Double;
+  NETPRICE      : Double;
+  DAYUSE        : Integer;
+  PAGATO        : Boolean;
+  DATAINTRO     : string;
+  EANCODE2      : string;
+  RITARDO       : Integer;
+  // Articoli
+  Articoli      : array of TArticoloRet;
+end;
+
   TSchedArticolo = class
   public
     CLI_NO      : Double;
@@ -41,6 +80,7 @@ type
     EANCODE2      : string;
     DATELASTADV   : TDateTime;
     Articoli      : array of TSchedArticolo;
+    
 
     constructor Create;
     destructor  Destroy; override;

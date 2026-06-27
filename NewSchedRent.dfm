@@ -1,6 +1,6 @@
 object New_Sched: TNew_Sched
-  Left = 57
-  Top = 67
+  Left = 128
+  Top = 121
   Width = 1460
   Height = 781
   Caption = 'SCHEDA NOLEGGIO'
@@ -131,14 +131,14 @@ object New_Sched: TNew_Sched
       Caption = 'STATO SCHEDA'
     end
     object Label6: TLabel
-      Left = 1000
+      Left = 984
       Top = 16
       Width = 99
       Height = 13
       Caption = 'STATO CONSEGNA'
     end
     object Label7: TLabel
-      Left = 112
+      Left = 504
       Top = 16
       Width = 117
       Height = 13
@@ -215,11 +215,11 @@ object New_Sched: TNew_Sched
       Caption = 'GIORNI'
     end
     object Label11: TLabel
-      Left = 1216
+      Left = 104
       Top = 16
-      Width = 117
+      Width = 52
       Height = 13
-      Caption = 'DATA_ORA CHIUSURA'
+      Caption = 'EANCODE'
       Visible = False
     end
     object Label12: TLabel
@@ -3735,7 +3735,7 @@ object New_Sched: TNew_Sched
       Text = 'Edit1'
     end
     object Edit6: TEdit
-      Left = 992
+      Left = 984
       Top = 32
       Width = 193
       Height = 37
@@ -3749,7 +3749,7 @@ object New_Sched: TNew_Sched
       Text = 'Edit1'
     end
     object Edit7: TEdit
-      Left = 112
+      Left = 504
       Top = 32
       Width = 273
       Height = 37
@@ -3815,9 +3815,9 @@ object New_Sched: TNew_Sched
       OnExit = SpinEdit1Exit
     end
     object Edit8: TEdit
-      Left = 1216
+      Left = 104
       Top = 32
-      Width = 193
+      Width = 225
       Height = 37
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -3827,7 +3827,6 @@ object New_Sched: TNew_Sched
       ParentFont = False
       TabOrder = 7
       Text = 'Edit1'
-      Visible = False
     end
     object MaskEdit3: TMaskEdit
       Left = 472

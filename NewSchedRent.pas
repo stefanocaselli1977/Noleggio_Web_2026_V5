@@ -171,6 +171,7 @@ type
     function FormatMaskEuro(AValue: Double): string;
     procedure RicalcolaNetto;
     function FormatMaskSconto(AValue: Double): string;
+
     
   // function  PeriodoContieneWeekend(DataInizio, DataFine: TDateTime): Boolean;
    // function  GetPrezzoUnitario(const ATipo: string; ADayUse: Integer; AHasWeekend: Boolean): Double;
@@ -181,8 +182,9 @@ type
     Scheda: TScheda;
 
     // Chiamare questo metodo dopo Create per inizializzare i dati passati dall'esterno
-    procedure Init(const AOwner, ANomCognCli, AIndirizzo: string;
-                   ACli_no: Double);
+    procedure Init(const AOwner, ANomCognCli, AIndirizzo: string; ACli_no: Double);
+    procedure LoadFromRisposta(const ARisposta: TRispostaGetSchedule);
+
   end;
 
 var
@@ -239,6 +241,122 @@ begin
   SetLength(Articoli, 0);
 end;
  }
+
+ procedure TNew_Sched.LoadFromRisposta(const ARisposta: TRispostaGetSchedule);
+var
+  i          : Integer;
+  Articolo   : TSchedArticolo;
+  DataStart  : TDateTime;
+  DataTake   : TDateTime;
+  DataIntro  : TDateTime;
+  DataClose  : TDateTime;
+begin
+  // --------------------------------------------------------
+  // Popola oggetto Scheda
+  // --------------------------------------------------------
+  Scheda.SCHED_NO   := ARisposta.SCHED_NO;
+  Scheda.CLI_NO     := ARisposta.CLI_NO;
+  Scheda.NOMCOGNCLI := ARisposta.NOMCOGNCLI;
+  Scheda.INDIRIZZO  := ARisposta.INDIRIZZO;
+  Scheda.OWNER      := ARisposta.OWNER;
+  Scheda.STATO      := ARisposta.STATO;
+  Scheda.STATO_CONS := ARisposta.STATO_CONS;
+  Scheda.SUBTOTALE  := ARisposta.SUBTOTALE;
+  Scheda.DISCOUNT   := ARisposta.DISCOUNT;
+  Scheda.NETPRICE   := ARisposta.NETPRICE;
+  Scheda.DAYUSE     := ARisposta.DAYUSE;
+  Scheda.PAGATO     := ARisposta.PAGATO;
+  Scheda.EANCODE2   := ARisposta.EANCODE2;
+  Scheda.NOTE       := ARisposta.NOTE;
+
+  // Converte le date da stringa dd/mm/yyyy hh:mm:ss a TDateTime
+  if TryStrToDateTime(ARisposta.DATASTARTRENT, DataStart) then
+    Scheda.DATASTARTRENT := DataStart;
+  if TryStrToDateTime(ARisposta.DATATAKEBACK, DataTake) then
+    Scheda.DATATAKEBACK := DataTake;
+  if TryStrToDateTime(ARisposta.DATAINTRO, DataIntro) then
+    Scheda.DATAINTRO := DataIntro;
+  if TryStrToDateTime(ARisposta.DATACLOSESCHD, DataClose) then
+    Scheda.DATACLOSESCHD := DataClose;
+
+  // --------------------------------------------------------
+  // Popola i controlli visivi
+  // --------------------------------------------------------
+  Edit1.Text  := FloatToStr(ARisposta.CLI_NO);
+  Edit2.Text  := ARisposta.NOMCOGNCLI;
+  Edit3.Text  := ARisposta.INDIRIZZO;
+  Edit4.Text  := FloatToStr(ARisposta.SCHED_NO);
+  Edit5.Text  := ARisposta.STATO;
+  Edit6.Text  := ARisposta.STATO_CONS;
+  Edit7.Text  := ARisposta.DATAINTRO;
+  Edit8.Text  := ARisposta.DATACLOSESCHD;
+
+  // Date nelle MaskEdit
+  if ARisposta.DATASTARTRENT <> '' then
+    MaskEdit2.Text := Copy(ARisposta.DATASTARTRENT, 1, 10)
+  else
+    MaskEdit2.Text := '  /  /    ';
+
+  if ARisposta.DATATAKEBACK <> '' then
+    MaskEdit1.Text := Copy(ARisposta.DATATAKEBACK, 1, 10)
+  else
+    MaskEdit1.Text := '  /  /    ';
+
+  // Giorni
+  SpinEdit1.Value := ARisposta.DAYUSE;
+  FLastDayUse     := ARisposta.DAYUSE;
+
+  // Totali
+  MaskEdit7.Text := FormatMaskEuro(ARisposta.SUBTOTALE);
+  MaskEdit8.Text := FormatMaskSconto(ARisposta.DISCOUNT) + '%';
+  MaskEdit9.Text := FormatMaskEuro(ARisposta.NETPRICE);
+
+  // Pagato
+  Scheda.PAGATO     := ARisposta.PAGATO;
+  CheckBox1.Checked := ARisposta.PAGATO;
+  if ARisposta.PAGATO then
+    CheckBox1.Caption := 'PAGATO'
+  else
+    CheckBox1.Caption := 'NON PAGATO';
+
+  // Note
+  NOTE.Lines.Text := ARisposta.NOTE;
+
+  // Ritardo — visibile solo se > 0
+  if ARisposta.RITARDO > 0 then
+  begin
+    Edit9.Text    := IntToStr(ARisposta.RITARDO) + ' gg';
+    Edit9.Visible := True;
+  end
+  else
+    Edit9.Visible := False;
+
+  // --------------------------------------------------------
+  // Popola articoli nell'oggetto Scheda e nello StringGrid
+  // --------------------------------------------------------
+  Scheda.ClearArticoli;
+  for i := 0 to High(ARisposta.Articoli) do
+  begin
+    Articolo             := TSchedArticolo.Create;
+    Articolo.CLI_NO      := ARisposta.CLI_NO;
+    Articolo.ART_NO      := ARisposta.Articoli[i].ART_NO;
+    Articolo.SCHED_NO    := ARisposta.SCHED_NO;
+    Articolo.EANCODE2    := ARisposta.Articoli[i].EANCODE;
+    Articolo.STAGIONE    := ARisposta.Articoli[i].STAGIONE;
+    Articolo.DESCRIZIONE := ARisposta.Articoli[i].DESCRIZIONE;
+    Articolo.BRAND       := ARisposta.Articoli[i].BRAND;
+    Articolo.TIPO        := ARisposta.Articoli[i].TIPO;
+    Articolo.MISURA      := ARisposta.Articoli[i].MISURA;
+    Articolo.QTA         := ARisposta.Articoli[i].QTA;
+    Articolo.FLAGREPLAY  := 0;
+
+    SetLength(Scheda.Articoli, i + 1);
+    Scheda.Articoli[i] := Articolo;
+  end;
+
+  // Ridisegna la griglia
+  RebuildStringGrid;
+end;
 
 
 procedure TNew_Sched.RebuildStringGrid;

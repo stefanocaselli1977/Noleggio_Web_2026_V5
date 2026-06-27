@@ -1233,7 +1233,7 @@ uses QRep3,Account,ViewCam ,softhire,Ean39CodeGen, GesTab, Pickdate,DettArticolo
   ZFact,RepZ,SceCliNew,PriceArt, TestOPNUnit, Riparazione, TennisModule,
   AllertSched,ReportRiparaz, availabelitem,ThreadEmail,Rfid_trial,
   webcamunit, docu_view,check_rip_payed, EtichettaRip_new_snow, WebCam_new, WebCam_new25,ViewCam_Show,uAppPaths,
-  otpcheck,api,NewSchedRent;//repzfact;
+  otpcheck,api,NewSchedRent, schedtypes;//repzfact;
 
 function TMenu.OccurrOfChar(const S: string; const C: char): integer;
 var
@@ -3572,7 +3572,12 @@ end;
 end;
 
 procedure TMenu.DBGrid4DblClick(Sender: TObject);
+var                      // sezione nuovo software
+  SchedNo   : Double;    // sezione nuovo software
+  Risposta  : TRispostaGetSchedule; // sezione nuovo software
+  FormSched : TNew_Sched;   // sezione nuovo software
 begin
+
 if DBGrid4.SelectedField.FieldName = 'CLI_NO'  THEN
  Begin
   DM.IBDataSetClienti.Close;
@@ -3588,14 +3593,38 @@ if DBGrid4.SelectedField.FieldName = 'CLI_NO'  THEN
   end;
  end;
 
+ // inizio sezione vecchio software query sul db e apertura tabsheet locale
+{
  if not (DBGrid4.SelectedField.FieldName = 'CLI_NO') THEN
  begin
   Tabsheet3.TabVisible:=true;
   Pagecontrol1.ActivePageIndex:=2;
 end;
- 
+} // fine sezione vecchio software query sul db e apertura tabsheet locale
 
+ if DBGrid4.SelectedField = nil then Exit;
+  if DBGrid4.SelectedField.FieldName <> 'SCHED_NO' then Exit;
+
+  // Legge SCHED_NO dal dataset collegato a DBGrid4
+  SchedNo := DM.IBDataSetScheduleSCHED_NO.AsFloat;  // <-- adatta al tuo dataset
+
+  // Chiama l'API
+  if not GetSchedule(SchedNo, Risposta) then
+  begin
+    ShowMessage('Errore recupero scheda: ' + Risposta.ErrorMsg);
+    Exit;
+  end;
+
+  // Crea la form e popola
+  FormSched := TNew_Sched.Create(Application);
+  try
+    FormSched.LoadFromRisposta(Risposta);
+    FormSched.ShowModal;
+  finally
+    FormSched.Free;
+  end;
 end;
+
 
 procedure TMenu.Edit12KeyPress(Sender: TObject; var Key: Char);
 var eanstr,Whereslc,Ordby:string;
